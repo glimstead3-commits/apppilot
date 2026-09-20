@@ -1,0 +1,14 @@
+# Render blueprint — creates the web service; create a MongoDB (Atlas or
+# Render) separately and set MONGO_URL in the dashboard.
+services:
+  - type: web
+    name: apppilot
+    runtime: python
+    plan: starter
+    buildCommand: cd frontend && npm install && npx vite build && cd ../backend && pip install -r requirements.txt
+    startCommand: cd backend && uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DB_NAME
+        value: apppilot
+      - key: MONGO_URL
+        sync: false
