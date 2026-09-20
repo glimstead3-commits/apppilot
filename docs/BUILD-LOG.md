@@ -48,11 +48,11 @@
 
 ## Stage 2 — Foundation
 
-- [ ] Auto-deploys (Render ← main)
-- [ ] DB connected
-- [ ] No secrets in repo
-- [ ] Live URL loads
-- [ ] GATE 2 PASSED — date:
+- [x] Auto-deploys (Render ← main)
+- [x] DB connected (`/api/health` → `"db":"connected"`)
+- [x] No secrets in repo (MONGO_URL in Render env vars only)
+- [x] Live URL loads: https://apppilot-v3rm.onrender.com/
+- [x] GATE 2 PASSED — 2026-01 (deployed via render.yaml blueprint, free plan)
 
 ## Stage 3 — First slice
 
