@@ -28,6 +28,15 @@ def get_db():
     return _db
 
 
+@app.get("/api/stages")
+def stages():
+    """Playbook stage definitions — served as data so content edits don't
+    need code changes."""
+    import json
+    path = Path(__file__).resolve().parent / "data" / "stage_definitions.json"
+    return json.loads(path.read_text())["stages"]
+
+
 @app.get("/api/health")
 def health():
     db = get_db()
