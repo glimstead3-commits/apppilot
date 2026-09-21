@@ -313,6 +313,79 @@ function StageCard({ stage, project, onSaved }) {
           <p style={{ marginTop: 10, fontSize: 12, color: "#64748b", fontStyle: "italic" }}>
             Gate: {stage.gate}
           </p>
+
+          <MentorChat projectId={project.id} stageKey={stage.key} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Mentor chat ---------- */
+
+function MentorChat({ projectId, stageKey }) {
+  const [open, setOpen] = useState(false);
+  const [msgs, setMsgs] = useState([]);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const load = () =>
+    api(`/api/projects/${projectId}/stages/${stageKey}/mentor`)
+      .then((d) => setMsgs(d.messages)).catch(() => {});
+
+  const send = async () => {
+    const message = text.trim();
+    if (!message) return;
+    setBusy(true); setErr(""); setText("");
+    setMsgs((m) => [...m, { role: "user", content: message }]);
+    try {
+      const d = await api(`/api/projects/${projectId}/stages/${stageKey}/mentor`, {
+        method: "POST", body: JSON.stringify({ message }),
+      });
+      setMsgs((m) => [...m, { role: "assistant", content: d.reply }]);
+    } catch (e) {
+      setErr(e.message);
+      setMsgs((m) => m.slice(0, -1));
+      setText(message);
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div style={{ marginTop: 12, borderTop: "1px solid #f1f5f9", paddingTop: 10 }}>
+      {!open ? (
+        <button onClick={() => { setOpen(true); load(); }}
+          style={{ background: "none", border: "none", color: "#8a6d2b", fontSize: 13, fontWeight: 600, cursor: "pointer", padding: 0 }}>
+          💬 Ask the mentor about this stage
+        </button>
+      ) : (
+        <div>
+          <div style={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
+            {msgs.length === 0 && (
+              <p style={{ fontSize: 12, color: "#94a3b8" }}>
+                Stuck? Ask anything — e.g. "I don't understand what a database is" or "what do I ask my AI tool to build next?"
+              </p>
+            )}
+            {msgs.map((m, i) => (
+              <div key={i} style={{
+                alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+                background: m.role === "user" ? "#17203a" : "#f1f5f9",
+                color: m.role === "user" ? "#fff" : "#1e293b",
+                borderRadius: 10, padding: "8px 12px", fontSize: 13, maxWidth: "85%",
+                whiteSpace: "pre-wrap", lineHeight: 1.5,
+              }}>
+                {m.content}
+              </div>
+            ))}
+            {busy && <div style={{ fontSize: 12, color: "#94a3b8" }}>mentor is typing…</div>}
+          </div>
+          {err && <p style={{ color: "#b91c1c", fontSize: 12, marginBottom: 6 }}>{err}</p>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <input style={{ ...input, marginTop: 0, flex: 1 }} placeholder="Ask the mentor… (1 credit)"
+              value={text} onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && send()} />
+            <button style={{ ...btn, padding: "8px 14px", fontSize: 13 }} onClick={send} disabled={busy || !text.trim()}>Send</button>
+          </div>
         </div>
       )}
     </div>

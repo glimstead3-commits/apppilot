@@ -17,9 +17,11 @@ DB_NAME = os.environ.get("DB_NAME", "apppilot")
 app = FastAPI(title="AppPilot")
 
 from routes import auth as auth_routes  # noqa: E402
+from routes import mentor as mentor_routes  # noqa: E402
 from routes import projects as project_routes  # noqa: E402
 
 app.include_router(auth_routes.router)
+app.include_router(mentor_routes.router)
 app.include_router(project_routes.router)
 
 _db = None
