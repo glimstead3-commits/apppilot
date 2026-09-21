@@ -115,13 +115,47 @@
       "title": "Harden",
       "plain": "Make it safe for strangers: permissions, validation, backups, secrets audit, error handling.",
       "why": "Too early = hardening features that get rewritten. Too late = real users hit real holes. Right moment: after features work, before strangers arrive.",
+      "guided_steps": [
+        "Secrets sweep: run `git log -p | grep -i -E 'api_key|secret|password|mongodb\\+srv'` — if anything real shows up, rotate that key immediately (assume it's leaked)",
+        "Check .gitignore covers .env files, then check `git ls-files | grep env` returns nothing",
+        "Isolation test: create a second account, copy its data ID, try to open it while logged in as the first user — must fail with 404/403, not work",
+        "Abuse test: signups and any paid-per-use feature (AI calls, emails) need rate limits or credits — assume someone will script it",
+        "Input test: paste emoji, 10,000 characters, and `<script>alert(1)</script>` into every form — nothing should crash or execute",
+        "Passwords: stored hashed (bcrypt/argon2/salted SHA), never plaintext, never logged",
+        "HTTPS: your host must serve HTTPS only — check the padlock, check http:// redirects",
+        "Backup: do a restore to a scratch database and open the data — an untested backup is a wish, not a backup",
+        "Dependencies: `npm audit` / `pip-audit` — fix anything marked critical before launch",
+        "Errors: make sure a crash logs somewhere you check (Render logs, Sentry) — silent failures are how breaches go unnoticed for months"
+      ],
+      "questions": [
+        {
+          "key": "worst_leak",
+          "ask": "If your database leaked tomorrow, what's the worst thing in it? Does that change what you're storing?"
+        },
+        {
+          "key": "attacker_profile",
+          "ask": "Who would bother attacking your app — bored script-kiddie, competitor, someone wanting free AI credits?"
+        },
+        {
+          "key": "free_abuse",
+          "ask": "What can a stranger do for free that costs YOU money? How is it capped?"
+        },
+        {
+          "key": "breach_plan",
+          "ask": "If you discovered user data was accessed last week, what's your first three moves?"
+        }
+      ],
       "gate": "You tried to break it as an attacker and couldn't \u2014 and you could lose the database right now and recover.",
       "checklist": [
         "Tried to reach another user's data while logged in as someone else \u2014 failed",
-        "Secrets audit: no keys/passwords anywhere in git history",
+        "Secrets audit: no keys/passwords anywhere in git history (checked with git log -p)",
         "Backup exists AND a restore was actually tested",
         "Bad input doesn't crash it \u2014 forms reject garbage safely",
-        "Errors are logged somewhere you'll actually look"
+        "Errors are logged somewhere you'll actually look",
+        "Anything that costs money per use (AI, email, SMS) is rate-limited or credit-gated",
+        "Passwords hashed at rest; sessions can be revoked; HTTPS only",
+        "npm audit / pip-audit run — no critical vulnerabilities unfixed",
+        "Every security question above has a written answer"
       ]
     },
     {
