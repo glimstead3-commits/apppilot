@@ -28,7 +28,21 @@
           "ask": "What does 'launched' mean \u2014 the moment you'll call it done?"
         }
       ],
-      "gate": "You can explain the app to a stranger in 30 seconds, and the not-doing list makes you slightly uncomfortable."
+      "gate": "You can explain the app to a stranger in 30 seconds, and the not-doing list makes you slightly uncomfortable.",
+      "traps": [
+        {
+          "trap": "Building before defining — the not-doing list gets skipped",
+          "story": "Real example: the CRM this app grew out of had its balance system rewritten three times because 'what counts as paid' was never written down first. An hour of Stage 0 would have saved a month."
+        },
+        {
+          "trap": "Answering 'everyone' for the first user",
+          "story": "If your app is 'for everyone' it's for no one. The first user should be a person you could phone. 'Novices building apps' only worked once we named the actual person: you."
+        },
+        {
+          "trap": "Scope creep disguised as planning",
+          "story": "Happened live in this build: mid-Stage-0, 'let's add bots' appeared — a real feature, but the right move was writing it down, deciding deliberately, THEN building. Ideas arriving mid-build is normal; letting them jump the queue is how projects die."
+        }
+      ]
     },
     {
       "key": "architect",
@@ -58,7 +72,21 @@
           "ask": "Name the 5\u201310 core 'things' (e.g. user, project, payment) and how they relate."
         }
       ],
-      "gate": "Every decision is written down WITH its reasoning \u2014 and the 'if wrong, how bad?' answers are all small."
+      "gate": "Every decision is written down WITH its reasoning \u2014 and the 'if wrong, how bad?' answers are all small.",
+      "traps": [
+        {
+          "trap": "Copying architecture from a tutorial or a bigger app",
+          "story": "The CRM needed a separate database per customer — it stores children's data. This app uses one shared DB with user_id tags — it stores project checklists. Same builder, opposite answers. Isolation is a per-app decision driven by data sensitivity, not a religion."
+        },
+        {
+          "trap": "Secrets ending up in code 'temporarily'",
+          "story": "API keys pasted into source get scraped by bots within minutes of pushing to GitHub — this is automated, not hypothetical. 'I'll move it to env vars later' is how keys leak. Env vars from line one, always."
+        },
+        {
+          "trap": "Bolting auth on later",
+          "story": "Retrofitting 'who is this user?' to a single-user app means touching every screen and every query. Adding it day one costs an afternoon; adding it in month three costs a rewrite."
+        }
+      ]
     },
     {
       "key": "foundation",
@@ -80,6 +108,20 @@
         "MONGO_URL set in Render Environment \u2014 database connected",
         "Live URL loads the page",
         "Pushed a small change and watched it auto-deploy"
+      ],
+      "traps": [
+        {
+          "trap": "Forgetting the env var — the app deploys but the database is silent",
+          "story": "Happened verbatim in this build: AppPilot deployed fine, health check said db: 'not_configured' — because MONGO_URL was never set. Deployment succeeding doesn't mean it's working; always check the health endpoint, not just 'did it deploy'."
+        },
+        {
+          "trap": "Building features before the pipeline exists",
+          "story": "The tempting order is: build it all locally, deploy at the end. What actually happens: three weeks of code meets hosting config that doesn't work, and you're debugging a dozen problems at once. Blank page live on day one flushes every plumbing issue while stakes are zero."
+        },
+        {
+          "trap": "Manual deploy steps you have to remember",
+          "story": "If deploying means 'run these 5 commands in the right order', you WILL eventually skip one and deploy a broken build. Auto-deploy-on-push means the pipeline can't be forgotten — the repo IS the deploy button."
+        }
       ]
     },
     {
@@ -94,6 +136,16 @@
         "Built just enough UI \u2192 API \u2192 database for that one action",
         "Verified it end-to-end with real-ish data",
         "A stranger could do it without you explaining"
+      ],
+      "traps": [
+        {
+          "trap": "Building in layers instead of slices",
+          "story": "'First the database, then all the API, then the UI' produces 80% of nothing for weeks. AppPilot's first slice was signup\u2192create project\u2192save answers — ugly but real. You could click it, break it, show someone. That's a slice."
+        },
+        {
+          "trap": "Trusting 'it looks right' over actually testing",
+          "story": "The gate check that blocked Stage 1 before Stage 0 was complete? That was caught by curl-ing the API, not by eyeballing code. Verified beats believed — every time you think 'obviously works', test it and be surprised occasionally."
+        }
       ]
     },
     {
@@ -107,6 +159,20 @@
         "Every must-do item from Stage 0 works on the live URL",
         "Each slice was deployed and verified before starting the next",
         "Nothing from the not-doing list snuck in"
+      ],
+      "traps": [
+        {
+          "trap": "Gates that auto-pass — decoration instead of enforcement",
+          "story": "Real bug found in this build: stages with no questions auto-passed because 'nothing missing' meant 'complete'. A gate that can't fail isn't a gate. Check your gates actually BLOCK something — try to sneak past them."
+        },
+        {
+          "trap": "Charging before success",
+          "story": "Found in this build too: mentor credits were deducted BEFORE the AI call — an API outage would have charged users for a canned fallback. Billing/metering bugs are invisible until someone audits them. Charge after success, always."
+        },
+        {
+          "trap": "Unrelated fix sneaking into a change",
+          "story": "While lightening the chat sidebar in the CRM, the global admin sidebar accidentally went light too — a CSS variable shared across pages. The fix: revert, scope the change tighter. Small commits make this a 2-minute undo instead of archaeology."
+        }
       ]
     },
     {
@@ -156,6 +222,20 @@
         "Passwords hashed at rest; sessions can be revoked; HTTPS only",
         "npm audit / pip-audit run — no critical vulnerabilities unfixed",
         "Every security question above has a written answer"
+      ],
+      "traps": [
+        {
+          "trap": "Emailing real users from a test system",
+          "story": "In the CRM, a test run nearly emailed real parents about fake payments. That's why the email sandbox exists — outbound mail is blocked by default anywhere that isn't production, and every send is logged. If your app sends messages, build the off-switch before you need it."
+        },
+        {
+          "trap": "Hiding data in the UI instead of blocking it in the API",
+          "story": "Showing a lock icon in React while the API happily serves the data is security theatre. Verified in this build: another user's project returns 404 — not 'hidden', nonexistent to you. Curious users open dev tools; enforce at the API."
+        },
+        {
+          "trap": "A backup that's never been restored",
+          "story": "Backups fail silently for months — wrong flags, missing permissions, corrupted files — and you find out the day you need them. An untested backup is a wish, not a backup. Restore to a scratch database once, for real."
+        }
       ]
     },
     {
@@ -170,6 +250,20 @@
         "Watched or recorded where they hesitated",
         "Fixed the top confusion points",
         "Nothing from Harden was skipped 'just for launch'"
+      ],
+      "traps": [
+        {
+          "trap": "Launching to everyone at once",
+          "story": "A big launch multiplies every undiscovered bug by every user. One friendly human first — you watch them click, they forgive the rough edges, and their confusion is your fix list. Widen only when they sail through."
+        },
+        {
+          "trap": "Skipping Harden 'just for launch' — and never coming back",
+          "story": "'We'll add rate limits after launch' is how real users discover the hole. Harden exists precisely because post-launch you never go back — you're too busy with launch problems. Gate 6 exists to catch this exact sentence."
+        },
+        {
+          "trap": "No disclaimers or legal pages until someone complains",
+          "story": "Even free beta products need: privacy (you hold emails), terms (AI can be wrong — say so), a support path. It takes an afternoon, not a lawyer — but pretending you don't need it is the trap."
+        }
       ]
     },
     {
@@ -184,6 +278,16 @@
         "Errors land somewhere you check",
         "Users have a feedback path (even an email link)",
         "You've run the loop once: observe \u2192 next slice \u2192 deploy"
+      ],
+      "traps": [
+        {
+          "trap": "Silent failures — errors that vanish",
+          "story": "In this build the AI mentor was failing silently and serving fallback text — users would never know the difference, and neither would we. The fix was logging the error to Render's logs. If a failure produces no signal, it doesn't exist — until a user notices."
+        },
+        {
+          "trap": "Finding out from users instead of your own checks",
+          "story": "The health endpoint shows which commit is deployed and whether the database is connected — one curl answers 'is it alive and is it the right version?' in a second. If the first sign of trouble is a user's email, you're operating blind."
+        }
       ]
     }
   ]

@@ -76,12 +76,17 @@ def _system_prompt(stage: dict, project: dict) -> str:
     answers = (project.get("stages") or {}).get(stage["key"], {}).get("answers") or {}
     answers_txt = "\n".join(f"- {k}: {v}" for k, v in answers.items()
                             if not k.startswith("check:") and str(v).strip())
+    traps_txt = ""
+    if stage.get("traps"):
+        traps_txt = "Traps novices hit at this stage (warn them when relevant):\n" + "\n".join(
+            f"- {t['trap']}: {t['story']}" for t in stage["traps"])
     return f"""You are AppPilot's mentor — a patient senior developer guiding a complete novice through building their app "{project.get('name', '')}".
 
 They are on Stage {stage['order']} — {stage['title']}.
 What this stage is: {stage.get('plain', '')}
 Why it matters: {stage.get('why', '')}
 Gate to pass: {stage.get('gate', '')}
+{traps_txt}
 {f"Their answers so far:{chr(10)}{answers_txt}" if answers_txt else ""}
 
 Rules:
