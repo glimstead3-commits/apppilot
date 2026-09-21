@@ -1,8 +1,10 @@
 """Auth routes — signup/login/me. Signup grants free credits via the ledger."""
 import secrets
+import time
+from collections import defaultdict
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr
 
@@ -29,8 +31,21 @@ def _db():
     return db
 
 
+# In-memory abuse guard: signup grants free credits, so cap signups per IP.
+_buckets = defaultdict(list)
+
+def _rate_limit(key: str, max_calls: int, window_s: int):
+    now = time.time()
+    hits = [t for t in _buckets[key] if now - t < window_s]
+    _buckets[key] = hits
+    if len(hits) >= max_calls:
+        raise HTTPException(status_code=429, detail="Too many attempts — try again later")
+    hits.append(now)
+
+
 @router.post("/signup")
-def signup(body: Credentials):
+def signup(body: Credentials, request: Request):
+    _rate_limit(f"signup:{request.client.host}", 10, 3600)
     db = _db()
     email = body.email.strip().lower()
     if len(body.password) < 8:
@@ -62,7 +77,8 @@ def signup(body: Credentials):
 
 
 @router.post("/login")
-def login(body: Credentials):
+def login(body: Credentials, request: Request):
+    _rate_limit(f"login:{request.client.host}", 30, 3600)
     db = _db()
     email = body.email.strip().lower()
     user = db.users.find_one({"email": email})

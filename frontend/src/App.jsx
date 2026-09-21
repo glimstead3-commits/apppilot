@@ -405,6 +405,17 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
             ))}
             {busy && <div style={{ fontSize: 12, color: "#94a3b8" }}>mentor is typing…</div>}
           </div>
+          {msgs.length === 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {["Explain this stage in one line", "What should I ask my AI builder first?", "Help me answer the questions below"].map((s) => (
+                <button key={s}
+                  onClick={() => { setText(s); }}
+                  style={{ fontSize: 12, background: "#eef2ff", color: "#3730a3", border: "1px solid #c7d2fe", borderRadius: 999, padding: "4px 10px", cursor: "pointer" }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
           {err && <p style={{ color: "#b91c1c", fontSize: 12, marginBottom: 6 }}>{err}</p>}
           <div style={{ display: "flex", gap: 8 }}>
             <input style={{ ...input, marginTop: 0, flex: 1 }} placeholder="Ask the mentor… (1 credit)"

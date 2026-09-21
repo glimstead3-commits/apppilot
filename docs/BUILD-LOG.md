@@ -63,19 +63,26 @@
 
 ## Stage 4 — Feature slices
 
-- [ ] Stages 1–7 wizard screens + checklists
-- [ ] Gate enforcement (stage N locked until N-1 complete)
-- [ ] AI mentor per stage (interviewer → architect → setup guide → …)
-- [ ] Credit ledger UI + free-signup grant
-- [ ] Build-log export
+- [x] Stages 1–7 wizard screens + checklists (every stage now gates on
+  questions AND checklist — no auto-pass)
+- [x] Gate enforcement (stage N locked until N-1 complete; 403 otherwise)
+- [x] AI mentor per stage — chat + history persisted; offline fallback
+  shows stage guidance when `AI_API_KEY` unset (no charge); real AI calls
+  spend 1 credit (402 when broke); "draft my answers" turns the chat into
+  filled form fields (strict-JSON extraction, 1 credit)
+- [x] Credit ledger + free-signup grant (balance chip in project header,
+  refreshes after spends)
+- [x] Build-log export (Markdown download)
+- [x] Project delete (removes mentor history too)
 - [ ] GATE 4 PASSED — date:
 
 ## Stage 5 — Harden
 
-- [ ] Auth/data-isolation tested (user A can't see user B)
-- [ ] Secrets audit clean
-- [ ] Signup abuse protection (email verify / rate limit — free AI
-  credits are a spam target)
+- [x] Auth/data-isolation tested — cross-user read/write/delete → 404;
+  logout invalidates session server-side
+- [x] Secrets audit clean — MONGO_URL/AI_API_KEY env-only; no secrets in repo
+- [x] Rate limits — signup 10/hr/IP, login 30/hr/IP, mentor 20/min/user
+  (in-memory; move to Mongo if multi-instance)
 - [ ] Backup restore tested
 - [ ] GATE 5 PASSED — date:
 

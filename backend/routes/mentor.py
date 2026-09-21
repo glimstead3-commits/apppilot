@@ -9,6 +9,20 @@ AI_API_KEY, AI_MODEL (optional per provider).
 """
 import os
 from datetime import datetime, timezone
+from collections import defaultdict
+import time
+
+# Tiny in-memory rate limiter — good enough for one Render instance.
+# (On multiple instances, move to MongoDB/Redis.)
+_buckets = defaultdict(list)
+
+def _rate_limit(key: str, max_calls: int, window_s: int):
+    now = time.time()
+    hits = [t for t in _buckets[key] if now - t < window_s]
+    _buckets[key] = hits
+    if len(hits) >= max_calls:
+        raise HTTPException(status_code=429, detail="Slow down — too many requests, try again in a minute")
+    hits.append(now)
 
 import requests
 from bson import ObjectId
@@ -109,6 +123,7 @@ def _call_ai(system: str, history: list) -> str:
 @router.post("/{project_id}/stages/{stage_key}/mentor")
 def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
                 user=Depends(get_current_user)):
+    _rate_limit(f"mentor:{user['_id']}", 20, 60)
     db = _db()
     try:
         oid = ObjectId(project_id)
@@ -179,6 +194,7 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
 def mentor_draft(project_id: str, stage_key: str, user=Depends(get_current_user)):
     """Turn the mentor chat into draft answers for the stage's questions.
     Spends 1 credit. Returns an answers dict the frontend fills in."""
+    _rate_limit(f"mentor:{user['_id']}", 20, 60)
     db = _db()
     try:
         oid = ObjectId(project_id)
