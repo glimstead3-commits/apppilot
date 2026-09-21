@@ -105,11 +105,11 @@
       ],
       "gate": "Push to main → live URL updates → page loads. You could break it right now and recover in under 5 minutes (revert the commit).",
       "checklist": [
-        "GitHub repo created and code pushed to main",
-        "Render web service created (Blueprint or manual)",
-        "MONGO_URL set in Render Environment — database connected",
-        "Live URL loads the page",
-        "Pushed a small change and watched it auto-deploy"
+        "Your code is saved on GitHub (just ask your AI builder: 'push this to GitHub' — it does it)",
+        "The app is live on a real URL (Render or similar — again, your builder sets this up)",
+        "The database is connected — ask your builder to confirm it can store data",
+        "You can open your live URL in a browser and see the page yourself",
+        "You changed something small and watched it go live by itself"
       ],
       "traps": [
         {
@@ -150,10 +150,10 @@
       "why": "A slice is demonstrable — you can click it and know it works. Layers give you 80% of nothing; a slice gives you 100% of something.",
       "gate": "A stranger could perform the action without you explaining anything — and you've watched it work, not just believed it works.",
       "checklist": [
-        "Picked the single most valuable action a user can take",
-        "Built just enough UI → API → database for that one action",
-        "Verified it end-to-end with real-ish data",
-        "A stranger could do it without you explaining"
+        "Picked the ONE most valuable thing a user can do — just one",
+        "A user can click something and it really works — tap → saved → shown back",
+        "You tested it yourself on the live URL, not just on your laptop",
+        "Someone who isn't you could use it without you standing there explaining"
       ],
       "traps": [
         {
@@ -174,9 +174,9 @@
       "why": "Each slice is small enough to revert in seconds and complete enough to show a user.",
       "gate": "Every must-do from Stage 0 works on the live URL — and nothing from the not-doing list snuck in.",
       "checklist": [
-        "Every must-do item from Stage 0 works on the live URL",
-        "Each slice was deployed and verified before starting the next",
-        "Nothing from the not-doing list snuck in"
+        "Everything from your day-one list works on the live URL",
+        "Each feature was live and tested before you started the next one",
+        "Nothing from your 'not yet' list snuck in"
       ],
       "traps": [
         {
@@ -252,14 +252,14 @@
       ],
       "gate": "You tried to break it as an attacker and couldn't — and you could lose the database right now and recover.",
       "checklist": [
-        "Tried to reach another user's data while logged in as someone else — failed",
-        "Secrets audit: no keys/passwords anywhere in git history (checked with git log -p)",
-        "Backup exists AND a restore was actually tested",
-        "Bad input doesn't crash it — forms reject garbage safely",
-        "Errors are logged somewhere you'll actually look",
-        "Anything that costs money per use (AI, email, SMS) is rate-limited or credit-gated",
-        "Passwords hashed at rest; sessions can be revoked; HTTPS only",
-        "npm audit / pip-audit run — no critical vulnerabilities unfixed",
+        "You tried to peek at another user's data while logged in as someone else — it failed",
+        "No passwords or keys hiding in your code or its history (ask your builder to check)",
+        "A backup exists AND you've actually tried restoring it once",
+        "Typing nonsense into forms doesn't crash anything",
+        "Errors get logged somewhere you'll actually look",
+        "Things that cost money per use (AI calls, emails) are capped — credits or limits",
+        "Passwords are stored scrambled, sessions can be killed, the URL starts with https",
+        "A vulnerability scan ran (npm audit or pip-audit) with nothing critical left open",
         "Every security question above has a written answer"
       ],
       "traps": [
@@ -285,10 +285,10 @@
       "why": "Every assumption gets tested in the first 10 minutes of a real person clicking around. Better they're forgiving.",
       "gate": "A real person completed the core action without your help — and nothing in Harden got skipped 'just for launch'.",
       "checklist": [
-        "One named human used it for its real purpose",
-        "Watched or recorded where they hesitated",
-        "Fixed the top confusion points",
-        "Nothing from Harden was skipped 'just for launch'"
+        "One real human — not you — used it for its real purpose",
+        "You watched where they hesitated or got confused",
+        "You fixed the top things that tripped them up",
+        "Nothing from the safety checks was skipped 'just for launch'"
       ],
       "traps": [
         {
@@ -322,10 +322,10 @@
       "why": "Software is never finished, it's maintained. Winners notice problems fastest and fix them smallest.",
       "gate": "Never ends — this stage IS the product.",
       "checklist": [
-        "Health/status check exists and you've looked at it",
-        "Errors land somewhere you check",
-        "Users have a feedback path (even an email link)",
-        "You've run the loop once: observe → next slice → deploy"
+        "There's a status/health page and you've actually looked at it",
+        "When something breaks, an error lands somewhere you check",
+        "Users have a way to tell you what's wrong (even just an email link)",
+        "You've done the loop once: notice a problem → improve → deploy"
       ],
       "traps": [
         {

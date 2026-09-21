@@ -802,9 +802,12 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
           </p>
           <div style={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
             {msgs.length === 0 && (
-              <p style={{ fontSize: 12, color: "#94a3b8" }}>
-                Start by describing your idea in a sentence or two — like telling a friend. The mentor will take it from there.
-              </p>
+              <div style={{
+                alignSelf: "flex-start", background: "#f1f5f9", color: "#1e293b",
+                borderRadius: 10, padding: "8px 12px", fontSize: 13, maxWidth: "85%", lineHeight: 1.5,
+              }}>
+                👋 Hi — I'm your mentor for this stage. Forget the questions for now — just tell me: what's the app idea, in your own words?
+              </div>
             )}
             {msgs.map((m, i) => (
               <div key={i} style={{
