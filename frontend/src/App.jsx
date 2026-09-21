@@ -613,7 +613,9 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
 
           {stage.guided_steps?.length > 0 && (
             <div style={{ marginTop: 12, background: "#f8fafc", borderRadius: 8, padding: "10px 14px" }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>How to do it:</p>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                {stage.guided_steps_intro || "How to do it:"}
+              </p>
               <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "#334155", lineHeight: 1.7 }}>
                 {stage.guided_steps.map((step, i) => <li key={i}>{step}</li>)}
               </ol>
@@ -653,7 +655,7 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
               {/* step progress */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".08em" }}>
-                  {step.type === "checklist" ? "Final checks" : `Question ${stepIdx + 1} of ${steps.length}`}
+                  {step.type === "checklist" ? "Last step — the checklist" : `Question ${stepIdx + 1} of ${(stage.questions || []).length}`}
                 </span>
                 <div style={{ display: "flex", gap: 4 }}>
                   {steps.map((_, i) => (
@@ -731,7 +733,7 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
                   <>
                     {err && <p style={{ color: "#b91c1c", fontSize: 13 }}>{err}</p>}
                     <button style={btn} onClick={save} disabled={busy}>
-                      {busy ? "Saving…" : done ? "Update answers" : "Save — pass this gate"}
+                      {busy ? "Saving…" : done ? "Update answers" : "Save — finish this stage"}
                     </button>
                   </>
                 )}
@@ -740,7 +742,7 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
           )}
 
           <p style={{ marginTop: 10, fontSize: 12, color: "#64748b", fontStyle: "italic" }}>
-            Gate: {stage.gate}
+            To pass this stage: {stage.gate}
           </p>
           </>)}
         </div>

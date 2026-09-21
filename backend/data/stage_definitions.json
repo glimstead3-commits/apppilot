@@ -5,7 +5,7 @@
       "order": 0,
       "title": "Define",
       "plain": "Write down what you're building in plain English — who it's for, the 3 things it must do, and what you're NOT building.",
-      "why": "Code is cheap to write and expensive to change. An hour of questions here beats a month of rebuilding. The 'not doing' list is what makes a project finishable.",
+      "why": "Code is cheap to write and expensive to change. An hour of honest answers here beats a month of rebuilding later. Clear edges are what make a project finishable.",
       "questions": [
         {
           "key": "one_sentence",
@@ -81,7 +81,7 @@
           "starter": "It chose ___ — when I asked why, it said ___"
         }
       ],
-      "gate": "Every decision is written down WITH its reasoning — and the 'if wrong, how bad?' answers are all small.",
+      "gate": "Every decision is written down with its reason — and you know what happens if each one turns out wrong.",
       "traps": [
         {
           "trap": "Copying architecture from a tutorial or a bigger app",
@@ -110,7 +110,7 @@
         "Click Deploy → wait ~3 min → open your URL and check it loads",
         "Verify the pipeline: push any small change to main and watch it redeploy by itself"
       ],
-      "gate": "Push to main → live URL updates → page loads. You could break it right now and recover in under 5 minutes (revert the commit).",
+      "gate": "Your code changes go live by themselves, and if it broke right now you'd know how to undo the last change.",
       "checklist": [
         "Your code is saved on GitHub (just ask your AI builder: 'push this to GitHub' — it does it)",
         "The app is live on a real URL (Render or similar — again, your builder sets this up)",
@@ -147,7 +147,8 @@
           "example": "'Email down → tell user to retry. AI down → mentor shows the written guide.'",
           "starter": "Relies on: ___. If it breaks: ___"
         }
-      ]
+      ],
+      "guided_steps_intro": "Do these with your AI builder — paste each step to it if unsure."
     },
     {
       "key": "first_slice",
@@ -213,7 +214,7 @@
       "key": "harden",
       "order": 5,
       "title": "Harden",
-      "plain": "Make it safe for strangers: permissions, validation, backups, secrets audit, error handling.",
+      "plain": "Make it safe for strangers: people can only see their own stuff, forms can't be crashed with nonsense, backups you can actually restore, and no passwords hiding in the code.",
       "why": "Too early = hardening features that get rewritten. Too late = real users hit real holes. Right moment: after features work, before strangers arrive.",
       "guided_steps": [
         "Secrets sweep: run `git log -p | grep -i -E 'api_key|secret|password|mongodb\\+srv'` — if anything real shows up, rotate that key immediately (assume it's leaked)",
@@ -282,7 +283,8 @@
           "trap": "A backup that's never been restored",
           "story": "Backups fail silently for months — wrong flags, missing permissions, corrupted files — and you find out the day you need them. An untested backup is a wish, not a backup. Restore to a scratch database once, for real."
         }
-      ]
+      ],
+      "guided_steps_intro": "Ask your AI builder to run each of these and show you the result."
     },
     {
       "key": "launch",
