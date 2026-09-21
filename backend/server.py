@@ -6,7 +6,7 @@ serves as static files with an SPA fallback. API under /api/*.
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pymongo import MongoClient
@@ -15,6 +15,8 @@ MONGO_URL = os.environ.get("MONGO_URL", "")
 DB_NAME = os.environ.get("DB_NAME", "apppilot")
 
 app = FastAPI(title="AppPilot")
+
+from utils.auth import get_current_user  # noqa: E402
 
 from routes import admin as admin_routes  # noqa: E402
 from routes import auth as auth_routes  # noqa: E402
@@ -45,6 +47,24 @@ def stages():
     import json
     path = Path(__file__).resolve().parent / "data" / "stage_definitions.json"
     return json.loads(path.read_text())["stages"]
+
+
+@app.post("/api/feedback")
+def feedback(body: dict, user=Depends(get_current_user)):
+    """Logged-in user feedback → db.feedback for the operator to read via
+    /api/admin/feedback."""
+    from datetime import datetime, timezone
+    db = get_db()
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not configured")
+    msg = str(body.get("message", "")).strip()[:2000]
+    if not msg:
+        raise HTTPException(status_code=400, detail="Empty message")
+    db.feedback.insert_one({
+        "user_id": user["_id"], "email": user.get("email", ""),
+        "message": msg, "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"ok": True}
 
 
 @app.get("/api/guides")

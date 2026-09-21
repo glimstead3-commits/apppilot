@@ -30,6 +30,9 @@ def create_session(db, user_id) -> str:
     return token
 
 
+SESSION_DAYS = 30  # sessions expire — stale tokens shouldn't live forever
+
+
 def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer)):
     if not creds:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -39,6 +42,14 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer)):
     sess = db.sessions.find_one({"token": creds.credentials})
     if not sess:
         raise HTTPException(status_code=401, detail="Invalid or expired session")
+    created = sess.get("created_at", "")
+    try:
+        age_s = (datetime.now(timezone.utc) - datetime.fromisoformat(created)).total_seconds()
+    except Exception:
+        age_s = SESSION_DAYS * 86400 + 1  # unparseable → treat as expired
+    if age_s > SESSION_DAYS * 86400:
+        db.sessions.delete_one({"_id": sess["_id"]})
+        raise HTTPException(status_code=401, detail="Session expired — log in again")
     user = db.users.find_one({"_id": sess["user_id"]})
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
@@ -52,4 +63,6 @@ def public_user(u: dict) -> dict:
         "name": u.get("name", ""),
         "plan": u.get("plan", "free"),
         "credits_balance": u.get("credits_balance", 0),
+        "is_admin": bool(u.get("is_admin")),
+        "email_verified": bool(u.get("email_verified")),
     }

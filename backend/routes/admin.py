@@ -68,6 +68,32 @@ def grant_credits(email: str, body: CreditGrant, admin=Depends(_admin)):
     return {"email": u["email"], "credits_balance": u.get("credits_balance", 0)}
 
 
+@router.get("/users")
+def list_users(admin=Depends(_admin)):
+    db = _db()
+    out = []
+    for u in db.users.find().sort("created_at", -1).limit(200):
+        out.append({
+            "email": u["email"], "name": u.get("name", ""),
+            "plan": u.get("plan", "free"),
+            "credits_balance": u.get("credits_balance", 0),
+            "email_verified": bool(u.get("email_verified")),
+            "projects": db.projects.count_documents({"user_id": u["_id"]}),
+            "created_at": u.get("created_at"),
+        })
+    return {"users": out}
+
+
+@router.get("/feedback")
+def list_feedback(admin=Depends(_admin)):
+    db = _db()
+    return {"feedback": [
+        {"email": f.get("email", ""), "message": f.get("message", ""),
+         "created_at": f.get("created_at")}
+        for f in db.feedback.find().sort("created_at", -1).limit(100)
+    ]}
+
+
 @router.get("/users/{email}/reset-link")
 def get_reset_link(email: str, admin=Depends(_admin)):
     """Manual password reset path: fetch a user's pending reset link so you
