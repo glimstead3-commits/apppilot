@@ -1,6 +1,9 @@
-"""Auth routes — signup/login/me. Signup grants free credits via the ledger."""
+"""Auth routes — signup/login/me/forgot/reset. Signup grants free credits."""
+import os
 import secrets
 import time
+
+import requests
 from collections import defaultdict
 from datetime import datetime, timezone
 
@@ -91,6 +94,73 @@ def login(body: Credentials, request: Request):
 @router.get("/me")
 def me(user=Depends(get_current_user)):
     return public_user(user)
+
+
+class ForgotRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetRequest(BaseModel):
+    token: str
+    password: str
+
+
+@router.post("/forgot")
+def forgot(body: ForgotRequest, request: Request):
+    """Request a password reset. Always returns ok — never reveal whether
+    the email exists (that's account-enumeration info for attackers)."""
+    _rate_limit(f"forgot:{request.client.host}", 10, 3600)
+    db = _db()
+    email = body.email.strip().lower()
+    user = db.users.find_one({"email": email})
+    if user:
+        token = secrets.token_urlsafe(32)
+        db.password_resets.insert_one({
+            "user_id": user["_id"], "token": token,
+            "expires_at": (datetime.now(timezone.utc).timestamp() + 3600),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "used": False,
+        })
+        _send_reset_email(email, token)
+    return {"ok": True}
+
+
+def _send_reset_email(email: str, token: str):
+    """Optional: sends via Resend if RESEND_API_KEY is set. Otherwise the
+    token sits in db.password_resets — retrievable via the admin endpoint."""
+    key = os.environ.get("RESEND_API_KEY", "").strip()
+    if not key:
+        return
+    base = os.environ.get("APP_BASE_URL", "").rstrip("/")
+    link = f"{base}/?reset={token}"
+    try:
+        requests.post("https://api.resend.com/emails", timeout=15,
+            headers={"Authorization": f"Bearer {key}"},
+            json={
+                "from": os.environ.get("EMAIL_FROM", "AppPilot <onboarding@resend.dev>"),
+                "to": [email],
+                "subject": "Reset your AppPilot password",
+                "text": f"Reset your password (link valid 1 hour):\n\n{link}\n\nIf you didn't ask for this, ignore it.",
+            })
+    except Exception as e:
+        print(f"[auth] reset email failed: {e}")
+
+
+@router.post("/reset")
+def reset(body: ResetRequest):
+    db = _db()
+    if len(body.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    doc = db.password_resets.find_one({"token": body.token.strip(), "used": False})
+    if not doc or doc["expires_at"] < datetime.now(timezone.utc).timestamp():
+        raise HTTPException(status_code=400, detail="Reset link is invalid or expired — request a new one")
+    salt = secrets.token_hex(16)
+    db.users.update_one({"_id": doc["user_id"]},
+                        {"$set": {"password_hash": hash_password(body.password, salt), "salt": salt}})
+    db.password_resets.update_one({"_id": doc["_id"]}, {"$set": {"used": True}})
+    # Invalidate all existing sessions — stolen-session risk ends here.
+    db.sessions.delete_many({"user_id": doc["user_id"]})
+    return {"ok": True}
 
 
 @router.post("/logout")

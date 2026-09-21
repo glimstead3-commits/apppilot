@@ -33,12 +33,15 @@ async function api(path, opts = {}) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [stages, setStages] = useState([]);
-  const [view, setView] = useState("loading"); // loading | auth | home | project
+  const [view, setView] = useState("loading"); // loading | auth | reset | home | project
+  const [resetToken, setResetToken] = useState("");
   const [projects, setProjects] = useState([]);
   const [project, setProject] = useState(null);
 
   useEffect(() => {
     fetch("/api/stages").then((r) => r.json()).then(setStages).catch(() => {});
+    const reset = new URLSearchParams(window.location.search).get("reset");
+    if (reset) { setResetToken(reset); setView("reset"); return; }
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return setView("auth");
     api("/api/auth/me")
@@ -54,6 +57,11 @@ export default function App() {
 
   if (view === "loading") return null;
   if (view === "auth") return <Auth onDone={(u) => { setUser(u); setView("home"); loadProjects(); }} />;
+  if (view === "reset")
+    return <ResetPassword token={resetToken} onDone={() => {
+      window.history.replaceState({}, "", "/");
+      setResetToken(""); setView("auth");
+    }} />;
   if (view === "project" && project)
     return (
       <ProjectView
@@ -87,17 +95,23 @@ function Auth({ onDone }) {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
-    setBusy(true); setErr("");
+    setBusy(true); setErr(""); setSent(false);
     try {
-      const data = await api(`/api/auth/${mode}`, {
-        method: "POST",
-        body: JSON.stringify({ email, password, name }),
-      });
-      localStorage.setItem(TOKEN_KEY, data.token);
-      onDone(data.user);
+      if (mode === "forgot") {
+        await api("/api/auth/forgot", { method: "POST", body: JSON.stringify({ email }) });
+        setSent(true);
+      } else {
+        const data = await api(`/api/auth/${mode}`, {
+          method: "POST",
+          body: JSON.stringify({ email, password, name }),
+        });
+        localStorage.setItem(TOKEN_KEY, data.token);
+        onDone(data.user);
+      }
     } catch (e2) {
       setErr(e2.message);
     } finally {
@@ -135,8 +149,12 @@ function Auth({ onDone }) {
 
       <div className="auth-panel">
         <form onSubmit={submit} className="auth-card">
-          <h2>{mode === "login" ? "Welcome back" : "Create your account"}</h2>
-          <p className="hint">{mode === "login" ? "Pick up where you left off" : "Start your first guided build"}</p>
+          <h2>{mode === "login" ? "Welcome back" : mode === "signup" ? "Create your account" : "Reset password"}</h2>
+          <p className="hint">
+            {mode === "login" ? "Pick up where you left off"
+             : mode === "signup" ? "Start your first guided build"
+             : "We'll email you a reset link"}
+          </p>
           {mode === "signup" && (
             <>
               <label>Name</label>
@@ -145,20 +163,38 @@ function Auth({ onDone }) {
           )}
           <label>Email</label>
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-          <label>Password</label>
-          <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-            placeholder={mode === "signup" ? "8+ characters" : "Your password"} />
+          {mode !== "forgot" && (
+            <>
+              <label>Password</label>
+              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === "signup" ? "8+ characters" : "Your password"} />
+            </>
+          )}
           {err && <p className="auth-err">{err}</p>}
+          {sent && mode === "forgot" && (
+            <p style={{ color: "#15803d", fontSize: 13, marginBottom: 12 }}>
+              If that account exists, a reset link is on its way. Check your email — and spam.
+            </p>
+          )}
           <button className="auth-cta" disabled={busy}>
-            {busy ? "…" : mode === "login" ? "Log in →" : "Create account →"}
+            {busy ? "…" : mode === "login" ? "Log in →" : mode === "signup" ? "Create account →" : "Send reset link"}
           </button>
+          {mode === "login" && (
+            <div className="auth-swap" style={{ marginTop: 10 }}>
+              <button type="button" onClick={() => { setMode("forgot"); setErr(""); setSent(false); }}>
+                Forgot password?
+              </button>
+            </div>
+          )}
           <div className="auth-swap">
-            {mode === "login" ? "New here? " : "Already have an account? "}
-            <button type="button" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setErr(""); }}>
-              {mode === "login" ? "Create an account" : "Log in"}
+            {mode === "login" ? "New here? " : "Back to "}
+            <button type="button" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setErr(""); setSent(false); }}>
+              {mode === "login" ? "Create an account" : "log in"}
             </button>
           </div>
-          <div className="auth-free"><b>50 free credits</b> included · no card required</div>
+          {mode !== "forgot" && (
+            <div className="auth-free"><b>50 free credits</b> included · no card required</div>
+          )}
         </form>
       </div>
     </div>
@@ -490,6 +526,61 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ---------- Reset password (via emailed link) ---------- */
+
+function ResetPassword({ token, onDone }) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [err, setErr] = useState("");
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr("");
+    if (password !== confirm) return setErr("Passwords don't match");
+    setBusy(true);
+    try {
+      await api("/api/auth/reset", { method: "POST", body: JSON.stringify({ token, password }) });
+      setDone(true);
+    } catch (e2) { setErr(e2.message); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div className="auth-wrap">
+      <div className="auth-panel" style={{ flex: "none", width: "100%" }}>
+        <form onSubmit={submit} className="auth-card">
+          <h2>Choose a new password</h2>
+          <p className="hint">This link expires in 1 hour</p>
+          {done ? (
+            <>
+              <p style={{ color: "#15803d", fontSize: 14, marginBottom: 16 }}>
+                Password updated — log in with your new password.
+              </p>
+              <button type="button" className="auth-cta" onClick={onDone}>Log in →</button>
+            </>
+          ) : (
+            <>
+              <label>New password</label>
+              <input type="password" required minLength={8} value={password}
+                onChange={(e) => setPassword(e.target.value)} placeholder="8+ characters" />
+              <label>Confirm password</label>
+              <input type="password" required minLength={8} value={confirm}
+                onChange={(e) => setConfirm(e.target.value)} placeholder="Type it again" />
+              {err && <p className="auth-err">{err}</p>}
+              <button className="auth-cta" disabled={busy}>{busy ? "…" : "Set new password"}</button>
+              <div className="auth-swap">
+                <button type="button" onClick={onDone}>Back to log in</button>
+              </div>
+            </>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

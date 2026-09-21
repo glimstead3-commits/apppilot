@@ -68,6 +68,23 @@ def grant_credits(email: str, body: CreditGrant, admin=Depends(_admin)):
     return {"email": u["email"], "credits_balance": u.get("credits_balance", 0)}
 
 
+@router.get("/users/{email}/reset-link")
+def get_reset_link(email: str, admin=Depends(_admin)):
+    """Manual password reset path: fetch a user's pending reset link so you
+    can send it yourself. Used until real email delivery is configured."""
+    import os
+    db = _db()
+    u = _find_user(db, email)
+    doc = db.password_resets.find_one(
+        {"user_id": u["_id"], "used": False}, sort=[("created_at", -1)])
+    if not doc:
+        raise HTTPException(status_code=404,
+                            detail="No pending reset — user must hit 'Forgot password' first")
+    base = os.environ.get("APP_BASE_URL", "").rstrip("/")
+    return {"link": f"{base}/?reset={doc['token']}",
+            "expires_at": doc["expires_at"]}
+
+
 @router.get("/users/{email}")
 def inspect_user(email: str, admin=Depends(_admin)):
     db = _db()
