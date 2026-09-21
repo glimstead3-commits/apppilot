@@ -63,6 +63,9 @@ def health():
         "db": "connected" if db_ok else "not_configured",
         # Render injects RENDER_GIT_COMMIT — lets us confirm which commit is live.
         "commit": os.environ.get("RENDER_GIT_COMMIT", "local")[:7],
+        # Shows whether the mentor is wired up — never exposes the key itself.
+        "mentor": os.environ.get("AI_PROVIDER", "anthropic")
+                  if os.environ.get("AI_API_KEY") else "offline",
     }
 
 

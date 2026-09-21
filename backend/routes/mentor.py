@@ -188,7 +188,8 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
     if ai_on:
         try:
             ai_reply = _call_ai(_system_prompt(stage, p), history)
-        except Exception:
+        except Exception as e:
+            print(f"[mentor] AI call failed ({os.environ.get('AI_PROVIDER','anthropic')}): {e}")
             ai_reply = ""
 
     if ai_reply:
