@@ -659,8 +659,11 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
                     style={{ ...input, minHeight: 90, resize: "vertical", fontSize: 15 }}
                     value={answers[step.key] || ""}
                     onChange={(e) => setAnswers({ ...answers, [step.key]: e.target.value })}
-                    placeholder="Your answer…"
+                    placeholder="Your answer — plain words are perfect…"
                   />
+                  <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>
+                    Stuck? That's normal — ask the mentor below and it can help you draft this answer.
+                  </p>
                 </div>
               )}
 

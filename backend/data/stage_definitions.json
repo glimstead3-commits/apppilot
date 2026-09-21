@@ -9,33 +9,33 @@
       "questions": [
         {
           "key": "one_sentence",
-          "ask": "Finish this: 'This app lets ___ do ___'",
-          "explain": "Force the whole app into one breath. If you can't say it in one sentence, you don't know what it is yet — and neither will anyone else.",
+          "ask": "In one sentence — what does your app do? Fill in: 'This app lets ___ do ___'",
+          "explain": "Don't overthink it — write it like you'd tell a friend in the pub. If it needs more than one sentence, the idea isn't clear yet.",
           "example": "'This app lets dog walkers record walks and bill owners without chasing WhatsApp messages.'"
         },
         {
           "key": "first_user",
-          "ask": "Who is the first real user? A named person or a type — not 'everyone'.",
-          "explain": "Pick one specific person or a tight type you can actually reach and phone. 'Everyone' means no one — you can't build for a crowd you can't picture.",
-          "example": "'Sarah — the dog walker on my street. ~15 regular clients, currently invoices by text at month-end.'"
+          "ask": "Who is ONE real person who would use this first? Give them a name, or describe them.",
+          "explain": "Not 'everyone' — one actual human you could show it to. Every good app started by solving one real person's problem.",
+          "example": "'Sarah — the dog walker on my street. About 15 clients, currently invoices by text at month-end.'"
         },
         {
           "key": "must_do",
-          "ask": "What are the 3 things it must do on day one?",
-          "explain": "Three, not thirty. If the app launched with ONLY these and nothing else, would your first user still use it? If not, the list is wrong.",
-          "example": "'1) Log a walk with photos. 2) Owner gets a walk summary. 3) Monthly invoice generated automatically.'"
+          "ask": "If your app could only do 3 things on day one, what are they?",
+          "explain": "Only three! Imagine your first user opening it tomorrow — what would they absolutely need? Everything else is version 2.",
+          "example": "'1) Log a walk with photos. 2) Owner gets a summary after each walk. 3) Invoice generated automatically at month-end.'"
         },
         {
           "key": "not_doing",
-          "ask": "What are you deliberately NOT building in version 1?",
-          "explain": "This list protects you. Every 'wouldn't it be cool if…' goes here, not into the build. Scope creep kills more apps than bad code.",
-          "example": "'NOT in v1: live GPS tracking, in-app chat, owner reviews, a marketplace of walkers.'"
+          "ask": "What cool ideas are you saving for later? List them here instead of building them now.",
+          "explain": "This list isn't rejection — it's protection. Every 'wouldn't it be cool if…' goes here so version 1 actually gets finished.",
+          "example": "'Later: live GPS tracking, in-app chat, owner reviews, a marketplace of walkers.'"
         },
         {
           "key": "launched_means",
-          "ask": "What does 'launched' mean — the moment you'll call it done?",
-          "explain": "Pick a concrete, observable moment — not 'when it feels ready'. A vague finish line is why side-projects never finish.",
-          "example": "'Launched = Sarah has used it for a full week of real walks and sent one real invoice to a real client.'"
+          "ask": "How will you know it's done? Describe the moment you'll say 'it works!'",
+          "explain": "Pick something you can actually see happen — a real person using it for real. 'When it feels ready' is a trap; it never feels ready.",
+          "example": "'When Sarah has used it for a full week of real walks and sent a real invoice to a real client.'"
         }
       ],
       "gate": "You can explain the app to a stranger in 30 seconds, and the not-doing list makes you slightly uncomfortable.",
@@ -63,33 +63,33 @@
       "questions": [
         {
           "key": "data_isolation",
-          "ask": "Can user A ever see user B's data? What's the worst that happens if they do?",
-          "explain": "Every record should belong to someone, and every database query should filter by owner. The worst-case answer decides how careful you must be.",
-          "example": "'Worst case: one walker sees another's client addresses + prices — bad. So every record carries a user_id and the API filters on it, always.'"
+          "ask": "Two strangers sign up. Should one ever be able to see the other's private stuff? What's the worst they could see?",
+          "explain": "Every app that stores people's data must answer this. The usual rule: everything gets tagged with its owner, and the app only ever shows you YOUR things.",
+          "example": "'Worst case: one walker sees another's client names and prices — bad. So every record gets tagged with its owner's ID.'"
         },
         {
           "key": "config_location",
-          "ask": "What changes per user/deployment? That belongs in the database, never in code.",
-          "explain": "Anything that varies between your laptop, the live server, or different customers belongs in config (env vars or the database) — never hardcoded.",
-          "example": "'Database URL, email sender address, the app name — all env vars. The code stays identical everywhere it runs.'"
+          "ask": "What might you want to change later without rebuilding — like the app's name, or which email it sends from?",
+          "explain": "Things that change per computer or per customer get stored as 'settings' (environment variables or the database), never typed into the code. A short list is fine.",
+          "example": "'The database address, the sender email, the app name — all settings, so the same code runs everywhere.'"
         },
         {
           "key": "secrets",
-          "ask": "What keys/passwords does it need? They live in env vars — never the repo.",
-          "explain": "List every secret the app needs. They live in environment variables on the server — the moment one lands in code or git, assume it's stolen.",
-          "example": "'AI_API_KEY, RESEND_API_KEY, MONGO_URL, JWT_SECRET — all in Render env vars, none in the repo.'"
+          "ask": "Will your app need any keys or passwords to talk to other services (email, payments, AI)? List them.",
+          "explain": "These are your app's passwords. They get stored safely on the server as 'environment variables' — never written into the code, where anyone could steal them.",
+          "example": "'AI_API_KEY (the mentor), RESEND_API_KEY (email), MONGO_URL (database password). All in env vars, none in the repo.'"
         },
         {
           "key": "external_deps",
-          "ask": "What does it talk to (payments, email, AI)? What's the fallback if it's down?",
-          "explain": "Email providers, payment systems and AI APIs all go down sometimes. Decide now what the app does when each fails — degraded beats dead.",
-          "example": "'AI provider down → mentor serves the written stage guide for free. Email down → admin hands out the reset link manually.'"
+          "ask": "Will your app rely on other services — like sending emails or taking payments? What should it do if one is down?",
+          "explain": "Every outside service breaks sometimes. For each one, pick a backup plan — even if it's just 'show a friendly error and try again'.",
+          "example": "'Email down → tell the user to try later. AI down → the mentor shows the written stage guide for free.'"
         },
         {
           "key": "data_model",
-          "ask": "Name the 5–10 core 'things' (e.g. user, project, payment) and how they relate.",
-          "explain": "The nouns and how they relate — 'a user has many projects'. If you can't draw it in five boxes, your AI builder will invent something worse.",
-          "example": "'User → many Projects. Project → 8 Stage records → answers + mentor messages. CreditTransaction → belongs to User.'"
+          "ask": "List the main 'things' your app needs to remember — like users, orders, messages. Which ones belong to which?",
+          "explain": "Just the nouns! 'A user has many projects' — that's a data model. 5 to 10 things is plenty. Stuck? The mentor below can help you draft this.",
+          "example": "'User → has many Projects. Project → has Stages and saved answers. User → has Credit transactions.'"
         }
       ],
       "gate": "Every decision is written down WITH its reasoning — and the 'if wrong, how bad?' answers are all small.",
@@ -216,27 +216,27 @@
       "questions": [
         {
           "key": "worst_leak",
-          "ask": "If your database leaked tomorrow, what's the worst thing in it? Does that change what you're storing?",
-          "explain": "The answer changes what you choose to store. If the worst item is unforgivable, stop storing it — you can't leak what you never kept.",
-          "example": "'Emails + hashed passwords — embarrassing, not catastrophic. No card numbers, no kids' addresses. Payment data lives at Stripe, not with me.'"
+          "ask": "Imagine a stranger downloaded your whole database tonight. What would they find? Anything scary?",
+          "explain": "This tells you what to protect hardest — and sometimes what to stop storing. You can't leak what you never kept.",
+          "example": "'Emails + scrambled passwords — embarrassing but OK. No card numbers (Stripe keeps those), no kids' addresses.'"
         },
         {
           "key": "attacker_profile",
-          "ask": "Who would bother attacking your app — bored script-kiddie, competitor, someone wanting free AI credits?",
-          "explain": "You're not fighting nation-states. Know your real attacker: script-kiddies scanning for easy wins, or freeloaders wanting your paid features free.",
-          "example": "'Most likely: someone farming free mentor chats with throwaway accounts — that's why credit limits and email verification exist.'"
+          "ask": "Who might actually try to break or cheat your app — bored kids, or someone wanting paid features for free?",
+          "explain": "You're probably not a target for elite hackers. The realistic threats: automated bots probing every website, and people gaming your free tier.",
+          "example": "'Most likely: bots testing weak passwords, and people making throwaway accounts to farm free mentor chats.'"
         },
         {
           "key": "free_abuse",
-          "ask": "What can a stranger do for free that costs YOU money? How is it capped?",
-          "explain": "Every free action that calls a paid API is a hole in your wallet. Find them all, cap them all — rate limits and credits are how.",
-          "example": "'Mentor messages cost me real money per call → capped by credits. Reset emails → capped by rate limiting.'"
+          "ask": "What can a stranger do on your app for free that quietly costs YOU money?",
+          "explain": "Sending emails, AI replies, storing files — pennies each, but a bot doing it 10,000 times is a real bill. Find each one, cap each one.",
+          "example": "'Mentor chats cost ~a penny each → capped by credits. Emails → capped by rate limits.'"
         },
         {
           "key": "breach_plan",
-          "ask": "If you discovered user data was accessed last week, what's your first three moves?",
-          "explain": "Panic is the default response. Write your first three moves now while you're calm — contain, assess, tell.",
-          "example": "'1) Rotate all keys + kill all sessions. 2) Work out whose data was touched. 3) Email affected users honestly — same day.'"
+          "ask": "If you found out someone broke in last week, what are your first 3 moves?",
+          "explain": "Write it now while you're calm: lock the doors (reset keys/passwords), find out what they took, tell the people affected — fast and honest.",
+          "example": "'1) Change every key + log everyone out. 2) Work out whose data was seen. 3) Email those users honestly, same day.'"
         }
       ],
       "gate": "You tried to break it as an attacker and couldn't — and you could lose the database right now and recover.",
