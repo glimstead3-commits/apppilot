@@ -144,20 +144,11 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
     if not msg:
         raise HTTPException(status_code=400, detail="Empty message")
 
-    # --- Credit check + ledger spend (only when AI is configured) ---
+    # --- Credit pre-check (spend happens only if the AI actually answers) ---
     ai_on = bool(os.environ.get("AI_API_KEY"))
-    if ai_on:
-        if (user.get("credits_balance") or 0) < MENTOR_COST:
-            raise HTTPException(status_code=402,
-                                detail="Out of credits — top up to keep chatting with the mentor")
-        db.users.update_one({"_id": user["_id"]}, {"$inc": {"credits_balance": -MENTOR_COST}})
-        db.credit_transactions.insert_one({
-            "user_id": user["_id"],
-            "amount": -MENTOR_COST,
-            "kind": "spend",
-            "reason": f"mentor:{stage_key}",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        })
+    if ai_on and (user.get("credits_balance") or 0) < MENTOR_COST:
+        raise HTTPException(status_code=402,
+                            detail="Out of credits — top up to keep chatting with the mentor")
 
     # --- History (per project+stage) ---
     hist_docs = list(
@@ -173,13 +164,25 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
         "content": msg, "created_at": now,
     })
 
-    try:
-        reply = _call_ai(_system_prompt(stage, p), history)
-    except Exception:
-        reply = ""
+    ai_reply = ""
+    if ai_on:
+        try:
+            ai_reply = _call_ai(_system_prompt(stage, p), history)
+        except Exception:
+            ai_reply = ""
 
-    if not reply:
-        # Fallback: static stage guidance (no AI configured or AI error)
+    if ai_reply:
+        # Charge only on a successful AI answer — never for the fallback.
+        db.users.update_one({"_id": user["_id"]}, {"$inc": {"credits_balance": -MENTOR_COST}})
+        db.credit_transactions.insert_one({
+            "user_id": user["_id"],
+            "amount": -MENTOR_COST,
+            "kind": "spend",
+            "reason": f"mentor:{stage_key}",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        reply = ai_reply
+    else:
         reply = (
             "Mentor's offline right now, so here's the stage guide instead:\n\n"
             f"{stage.get('plain', '')}\n\n"
@@ -190,7 +193,7 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
         "project_id": oid, "stage_key": stage_key, "role": "assistant",
         "content": reply, "created_at": datetime.now(timezone.utc).isoformat(),
     })
-    return {"reply": reply, "ai": ai_on and bool(reply)}
+    return {"reply": reply, "ai": bool(ai_reply)}
 
 
 @router.post("/{project_id}/stages/{stage_key}/draft")
