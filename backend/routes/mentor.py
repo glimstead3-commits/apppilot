@@ -136,6 +136,9 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
     stage = next((s for s in _stage_defs() if s["key"] == stage_key), None)
     if not stage:
         raise HTTPException(status_code=404, detail="Unknown stage")
+    if user.get("plan") == "free" and stage.get("order", 0) >= 2:
+        raise HTTPException(status_code=402,
+                            detail="Upgrade to unlock the mentor for this stage")
 
     msg = body.message.strip()
     if not msg:
@@ -206,6 +209,9 @@ def mentor_draft(project_id: str, stage_key: str, user=Depends(get_current_user)
     stage = next((s for s in _stage_defs() if s["key"] == stage_key), None)
     if not stage:
         raise HTTPException(status_code=404, detail="Unknown stage")
+    if user.get("plan") == "free" and stage.get("order", 0) >= 2:
+        raise HTTPException(status_code=402,
+                            detail="Upgrade to unlock the mentor for this stage")
     questions = stage.get("questions") or []
     if not questions:
         raise HTTPException(status_code=400, detail="This stage has no questions to draft")

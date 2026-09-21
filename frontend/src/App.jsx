@@ -240,14 +240,15 @@ function ProjectView({ project, stages, onBack, onSaved }) {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {stages.map((s) => (
-          <StageCard key={s.key} stage={s} project={project} onSaved={onSaved} onSpent={refreshMe} />
+          <StageCard key={s.key} stage={s} project={project} onSaved={onSaved} onSpent={refreshMe}
+            planLocked={(me?.plan ?? "free") === "free" && s.order >= 2} />
         ))}
       </div>
     </div>
   );
 }
 
-function StageCard({ stage, project, onSaved, onSpent }) {
+function StageCard({ stage, project, onSaved, onSpent, planLocked }) {
   const done = project.stages?.[stage.key]?.completed;
   const unlocked = stage.order <= project.current_stage;
   const [open, setOpen] = useState(stage.order === project.current_stage);
@@ -298,6 +299,15 @@ function StageCard({ stage, project, onSaved, onSpent }) {
             </div>
           )}
 
+          {planLocked && !done ? (
+            <div style={{ marginTop: 12, background: "#fdf6e3", border: "1px solid #e8d48b", borderRadius: 8, padding: "12px 14px" }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#8a6d2b", marginBottom: 4 }}>🔒 This stage is part of the full journey</p>
+              <p style={{ fontSize: 13, color: "#6b5a1e", lineHeight: 1.5, margin: 0 }}>
+                Your free plan covers Define &amp; Architect. Upgrade to unlock the mentor and all
+                remaining stages — everything above is exactly what you'd be guided through.
+              </p>
+            </div>
+          ) : (<>
           {stage.questions?.length > 0 && (
             <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
               {stage.questions.map((q) => (
@@ -344,6 +354,7 @@ function StageCard({ stage, project, onSaved, onSpent }) {
             hasQuestions={(stage.questions || []).length > 0}
             onSpent={onSpent}
             onDraft={(a) => setAnswers((prev) => ({ ...prev, ...a }))} />
+          </>)}
         </div>
       )}
     </div>

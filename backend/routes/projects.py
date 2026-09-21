@@ -10,6 +10,10 @@ from utils.database import get_db
 
 router = APIRouter(prefix="/api/projects")
 
+# Free plan covers the aha moment (Define + Architect), paid unlocks the rest.
+# Billing itself is deferred — upgrade is a manual/admin action for now.
+FREE_STAGE_LIMIT = 2
+
 
 class NewProject(BaseModel):
     name: str
@@ -98,6 +102,11 @@ def save_stage(project_id: str, stage_key: str, body: StageAnswers,
     stage = by_key[stage_key]
     if stage["order"] > p.get("current_stage", 0):
         raise HTTPException(status_code=403, detail="Complete earlier stages first")
+    if user.get("plan") == "free" and stage["order"] >= FREE_STAGE_LIMIT:
+        raise HTTPException(
+            status_code=402,
+            detail="Free plan covers Define & Architect — upgrade to unlock the full journey",
+        )
 
     # Gate = every question answered AND every checklist item ticked.
     missing = [q["key"] for q in stage.get("questions", [])
