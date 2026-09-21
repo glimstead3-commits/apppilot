@@ -15,6 +15,14 @@ _bearer = HTTPBearer(auto_error=False)
 # not enough to never need to pay. Override via env without a redeploy.
 SIGNUP_CREDITS = int(os.environ.get("SIGNUP_CREDITS", "15"))
 
+# Bootstrap admin via env — "make my account admin" becomes a config step,
+# not a Mongo edit. Comma-separated emails, e.g. ADMIN_EMAILS=me@x.com,bob@y.com
+ADMIN_EMAILS = {
+    e.strip().lower()
+    for e in os.environ.get("ADMIN_EMAILS", "").split(",")
+    if e.strip()
+}
+
 
 def hash_password(password: str, salt: str) -> str:
     return hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100_000).hex()
@@ -53,6 +61,8 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer)):
     user = db.users.find_one({"_id": sess["user_id"]})
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    if user.get("email", "").lower() in ADMIN_EMAILS:
+        user["is_admin"] = True
     return user
 
 
