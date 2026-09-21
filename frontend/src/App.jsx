@@ -623,3 +623,52 @@ function LegalPage({ docKey }) {
     </div>
   );
 }
+
+/* ---------- Integration guides (/guides) ---------- */
+
+function GuidesPage() {
+  const [guides, setGuides] = useState([]);
+  const [open, setOpen] = useState(null);
+  useEffect(() => {
+    fetch("/api/guides").then((r) => r.json()).then(setGuides).catch(() => {});
+  }, []);
+  return (
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 20px" }}>
+      <a href="/" style={{ fontSize: 13, color: "#8a6d2b", textDecoration: "none" }}>← AppPilot</a>
+      <h1 style={{ fontSize: 26, margin: "14px 0 6px" }}>Integration guides</h1>
+      <p style={{ fontSize: 14, color: "#64748b", marginBottom: 24, lineHeight: 1.6 }}>
+        Third-party services — email, payments, AI, files — all set up the same way.
+        Start with "The universal pattern", then open whichever you need.
+      </p>
+      {guides.map((g) => (
+        <div key={g.key} style={{ ...card, marginBottom: 12, padding: 0, overflow: "hidden" }}>
+          <button onClick={() => setOpen(open === g.key ? null : g.key)}
+            style={{ width: "100%", textAlign: "left", background: "none", border: "none", padding: "16px 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>{g.title}</div>
+              <div style={{ fontSize: 12, color: "#64748b" }}>{g.tagline}</div>
+            </div>
+            <span style={{ color: "#94a3b8" }}>{open === g.key ? "▾" : "▸"}</span>
+          </button>
+          {open === g.key && (
+            <div style={{ padding: "0 20px 18px" }}>
+              <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.6, marginBottom: 12 }}>{g.intro}</p>
+              <div style={{ background: "#f8fafc", borderRadius: 8, padding: "12px 14px", marginBottom: 12 }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>How to set it up:</p>
+                <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "#334155", lineHeight: 1.7 }}>
+                  {g.steps.map((s, i) => <li key={i}>{s}</li>)}
+                </ol>
+              </div>
+              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px" }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>⚠ Traps:</p>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: "#92400e", lineHeight: 1.65 }}>
+                  {g.traps.map((t, i) => <li key={i}>{t}</li>)}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}

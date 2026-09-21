@@ -1,0 +1,164 @@
+{
+  "guides": [
+    {
+      "key": "the-pattern",
+      "title": "The universal pattern (read this first)",
+      "tagline": "Every third-party service sets up the same way",
+      "intro": "Stripe, Resend, OpenAI, Twilio — they all follow one shape. Learn it once and every new service is a variation, not a mystery.",
+      "steps": [
+        "1. Create an account on the provider's site — use a login you control long-term (work email, not a throwaway)",
+        "2. Find the API keys page — there are almost always TWO keys: test/sandbox and live/production",
+        "3. Put the TEST key in your local env vars — build the whole feature against test mode",
+        "4. Add the key to Render → Environment — never in code, never committed",
+        "5. If the service calls YOU back (payment succeeded, email delivered), that's a webhook — you build an endpoint, give them the URL, and verify their signing secret",
+        "6. Test the failure path — what does your app do when the API is down or the key is wrong? (It should degrade, not crash)",
+        "7. Only when it all works: swap to LIVE keys in production env vars, test keys stay for dev"
+      ],
+      "traps": [
+        "Test vs live keys mixed up — the #1 integration bug. Your dev runs on test keys forever; live keys only ever live in production env vars.",
+        "Webhook secrets skipped — without verifying the signature, anyone can POST fake 'payment succeeded' events to your endpoint.",
+        "No fallback — when the provider has an outage (they all do), your app should degrade gracefully, not hang."
+      ]
+    },
+    {
+      "key": "email",
+      "title": "Email — Resend, SendGrid, Amazon SES",
+      "tagline": "Sending real email that lands in inboxes, not spam",
+      "intro": "You cannot reliably send email from your own server — it goes straight to spam. You need an email service. Resend is the friendliest for small apps; SES is cheapest at volume but more complex.",
+      "steps": [
+        "Pick a provider — Resend is the novice-friendly default (free tier ~100 emails/day, clean API, one API key)",
+        "Verify your domain (resend.com → Domains → add the DNS records they show you in your registrar). Until verified you can only send to yourself — that's normal, it's anti-spam",
+        "API key → env var (RESEND_API_KEY). Send test emails to yourself first",
+        "Build the send path behind ONE function — every feature calls send_email(), never the API directly. That one place is where you add logging, sandboxing, and fallback",
+        "Sandbox first — add a mode that blocks real sends to non-test addresses. A test script accidentally emailing 500 real users is a real-world trap that actually happens"
+      ],
+      "traps": [
+        "Sending from an unverified domain — instant spam folder or outright rejection.",
+        "No sandbox — one stray test script emails your entire user base. The CRM built its sandbox after exactly this near-miss.",
+        "Secrets in the from-address logic — 'from' must be a domain you verified, not a customer's email."
+      ]
+    },
+    {
+      "key": "payments",
+      "title": "Payments — Stripe",
+      "tagline": "Taking money without touching card numbers",
+      "intro": "Never handle card numbers yourself — that's a compliance nightmare (PCI). Stripe Checkout or Payment Links host the card form; you just get told 'paid' via webhook.",
+      "steps": [
+        "Create a Stripe account → get the TEST keys (pk_test_… and sk_test_…) from the dashboard",
+        "Decide the product shape first: one-off payment, subscription, or credits top-up — they're different Stripe objects",
+        "Use Stripe Checkout (hosted page) or Payment Links — the card form lives on Stripe's servers, which is what keeps you out of PCI scope",
+        "Build the webhook endpoint — the payment 'succeeded' event arrives there. Verify the webhook signing secret (whsec_…) or anyone can fake a payment",
+        "Record payments in your own DB as ledger rows keyed to Stripe IDs — Stripe is the money rail, YOUR database is the source of truth for what a user is owed",
+        "Test the full loop with Stripe's test cards (4242 4242 4242 4242) including failure cards — then flip to live keys"
+      ],
+      "traps": [
+        "Trusting the browser redirect instead of the webhook — users close tabs; the webhook is the authoritative 'paid' signal.",
+        "Skipping signature verification on webhooks — forged 'payment succeeded' events are a real attack.",
+        "Double-charging on retries — subscriptions and renewals need idempotent handling; the CRM's cancelled-subscription incident is exactly this class of bug."
+      ]
+    },
+    {
+      "key": "ai",
+      "title": "AI providers — Gemini, Anthropic, OpenAI",
+      "tagline": "Adding AI features without burning money",
+      "intro": "Each provider has a console where you create an API key. Gemini has a real free tier (aistudio.google.com — no card); Anthropic and OpenAI are prepaid but cheap for small apps.",
+      "steps": [
+        "Start with Gemini's free tier to validate the feature — upgrade to a paid provider when usage or quality demands it",
+        "Write your calls behind one wrapper function (call_ai(system, history)) with a provider switch — so you can swap providers by changing an env var, not rewriting code",
+        "Meter every call — AI costs money per request. Log usage per user and cap it (credits, rate limits) or a bot will run up your bill",
+        "Set max_tokens and timeouts on every call — an uncapped response or a hung request is a silent cost/hang",
+        "Design the offline fallback — when the provider is down or the user is out of credits, the app should still do something useful"
+      ],
+      "traps": [
+        "No metering — AI is the one integration where a bored user or bot can cost you real money per request.",
+        "Silent failures — log provider errors; a fallback that swallows errors means you never know the AI is broken (happened in this very build).",
+        "User secrets in prompts — warn users not to paste API keys/passwords into AI chats; providers log them."
+      ]
+    },
+    {
+      "key": "oauth",
+      "title": "Social login — Google, GitHub OAuth",
+      "tagline": "'Sign in with Google' so users skip passwords",
+      "intro": "OAuth lets users log in with an existing account. You register your app with the provider, they send the user back with proof of identity. Removes password-reset support burden too.",
+      "steps": [
+        "Register your app at the provider's console (Google Cloud Console / GitHub Developer Settings) — you get a client ID + secret",
+        "Set the redirect URL exactly — providers reject mismatches; you'll need one for localhost AND one for production",
+        "The flow: your button → provider's consent page → back to your callback URL with a code → your backend exchanges the code for the user's verified email",
+        "Link by email — if they signed up with password then use Google with the same email, connect the accounts (or reject clearly)",
+        "Client secret goes in env vars; the client ID is public and fine in frontend code"
+      ],
+      "traps": [
+        "Redirect URI mismatch — the most common OAuth error; every environment needs its URL registered.",
+        "Trusting the frontend's copy of the identity — always verify the code exchange server-side.",
+        "Assuming emails are verified — only some providers guarantee it; check the verified flag."
+      ]
+    },
+    {
+      "key": "errors",
+      "title": "Error tracking — Sentry",
+      "tagline": "Know it broke before users tell you",
+      "intro": "When your app crashes for a user, you shouldn't find out via email. Sentry captures errors with stack traces, context, and counts — free tier covers small apps.",
+      "steps": [
+        "Create a Sentry project → get a DSN (it's a public key, safe to ship in frontend code)",
+        "Backend: one SDK init line captures unhandled exceptions automatically",
+        "Frontend: same — React errors get reported with component context",
+        "Add user context (id/email) to events — 'which user hit this?' is the first debugging question",
+        "Set alert rules — email/Slack on new error types, not every repeat"
+      ],
+      "traps": [
+        "Logging passwords/tokens — scrub sensitive fields (Sentry does this by default for common names, but check).",
+        "Alert fatigue — if every trivial error pings you, you'll mute the channel and miss the real one."
+      ]
+    },
+    {
+      "key": "files",
+      "title": "File & image storage — S3, Cloudinary",
+      "tagline": "User uploads don't belong in your database or repo",
+      "intro": "Uploaded files (avatars, PDFs, photos) go to object storage, not your app server or MongoDB. Cloudinary is friendliest for images; S3 is the standard for everything else.",
+      "steps": [
+        "Create a bucket/storage account; get access keys → env vars",
+        "Upload via signed URLs — the browser uploads straight to storage; your server just signs the permission slip (keeps big files off your server)",
+        "Store only the file's URL/key in your database, never the file bytes",
+        "Set file size + type limits server-side — signed URLs don't stop a user uploading a 2GB file",
+        "Private files need signed download URLs too — a public URL pattern means anyone who guesses the name gets the file"
+      ],
+      "traps": [
+        "Files in the database — fine for a 10KB logo, disastrous for real uploads (Mongo docs cap at 16MB anyway).",
+        "Public buckets — check bucket policy; 'private by default' is not universal.",
+        "No malware/type check — a user uploads an .exe named photo.jpg; validate content type, not just extension."
+      ]
+    },
+    {
+      "key": "sms",
+      "title": "SMS — Twilio",
+      "tagline": "Text messages for codes and alerts",
+      "intro": "SMS needs a provider and usually a rented phone number. Twilio is the standard. SMS costs per message — meter it like AI calls.",
+      "steps": [
+        "Create a Twilio account → get Account SID + Auth Token → env vars",
+        "Buy a number (or use their trial number — trial SMS only goes to verified numbers)",
+        "Rate-limit sends hard — SMS costs ~$0.01–0.08 each and 'SMS pumping' bots exist to run up bills",
+        "For verification codes: generate the code server-side, store it hashed with an expiry, never in the URL"
+      ],
+      "traps": [
+        "Unmetered sends — SMS pumping fraud is real; cap sends per user/IP per day.",
+        "Codes that never expire — verification codes should live minutes, not days."
+      ]
+    },
+    {
+      "key": "analytics",
+      "title": "Analytics — Plausible, PostHog",
+      "tagline": "Seeing what users actually do",
+      "intro": "Skip Google Analytics — heavy, cookie-banner-requiring. Plausible and PostHog are lightweight, privacy-friendly, and don't need a consent banner for basic stats.",
+      "steps": [
+        "Add the provider's snippet/script to your frontend (Plausible: one script tag; PostHog: one SDK init)",
+        "Track the few events that matter — signup, project created, stage passed — not every click",
+        "Decide what you won't collect — a written line ('no keystrokes, no chat content') is a feature you can put on the security page",
+        "Use it to answer questions, not to hoard data — 'where do users drop off?' beats 'everything, just in case'"
+      ],
+      "traps": [
+        "Tracking personal content — mentor chats and user answers are private; analytics should see events, not content.",
+        "Dashboard wallpaper — data you never look at is a liability, not an asset."
+      ]
+    }
+  ]
+}

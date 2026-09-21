@@ -47,6 +47,14 @@ def stages():
     return json.loads(path.read_text())["stages"]
 
 
+@app.get("/api/guides")
+def guides():
+    """Third-party integration guides — content as data."""
+    import json
+    return json.loads(
+        (Path(__file__).resolve().parent / "data" / "guides.json").read_text())["guides"]
+
+
 @app.get("/api/legal/{key}")
 def legal(key: str):
     import json
