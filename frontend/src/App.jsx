@@ -562,6 +562,21 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
   const step = steps[Math.min(stepIdx, steps.length - 1)];
 
   const save = async () => {
+    // Gate feedback — never silently refuse: find what's missing and
+    // take the user straight to it before calling the API.
+    const questions = stage.questions || [];
+    const blank = questions.findIndex((q) => !String(answers[q.key] || "").trim());
+    if (blank >= 0) {
+      setStepIdx(blank);
+      setErr("Answer every question to pass this gate — this one's still blank. (Rough is fine!)");
+      return;
+    }
+    const unticked = (stage.checklist || []).findIndex((_, i) => answers[`check:${i}`] !== true);
+    if (unticked >= 0) {
+      setStepIdx(steps.length - 1);
+      setErr("Tick every check to pass — it's a promise, not a formality.");
+      return;
+    }
     setBusy(true); setErr("");
     try {
       const p = await api(`/api/projects/${project.id}/stages/${stage.key}`, {
@@ -661,9 +676,11 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
                     onChange={(e) => setAnswers({ ...answers, [step.key]: e.target.value })}
                     placeholder="Your answer — plain words are perfect…"
                   />
-                  <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>
-                    Stuck? That's normal — ask the mentor below and it can help you draft this answer.
-                  </p>
+                  {err
+                    ? <p style={{ fontSize: 13, color: "#b45309", marginTop: 8 }}>{err}</p>
+                    : <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>
+                        Stuck? That's normal — ask the mentor below and it can help you draft this answer.
+                      </p>}
                 </div>
               )}
 
