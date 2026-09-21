@@ -70,7 +70,10 @@ export default function App() {
       stages={stages}
       onOpen={openProject}
       onCreated={(p) => { setProject(p); setView("project"); }}
-      onLogout={() => { localStorage.removeItem(TOKEN_KEY); setUser(null); setView("auth"); }}
+      onLogout={async () => {
+        try { await api("/api/auth/logout", { method: "POST", body: "{}" }); } catch {}
+        localStorage.removeItem(TOKEN_KEY); setUser(null); setView("auth");
+      }}
     />
   );
 }
@@ -199,6 +202,10 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout }) {
 /* ---------- Project: stages + interview ---------- */
 
 function ProjectView({ project, stages, onBack, onSaved }) {
+  const [me, setMe] = useState(null);
+  const refreshMe = () => api("/api/auth/me").then(setMe).catch(() => {});
+  useEffect(() => { refreshMe(); }, []);
+
   const exportLog = async () => {
     const data = await api(`/api/projects/${project.id}/export`);
     const blob = new Blob([data.markdown], { type: "text/markdown" });
@@ -216,6 +223,11 @@ function ProjectView({ project, stages, onBack, onSaved }) {
       </button>
       <div style={{ display: "flex", alignItems: "center", marginBottom: 20 }}>
         <h1 style={{ fontSize: 26 }}>{project.name}</h1>
+        {me && (
+          <span style={{ marginLeft: "auto", marginRight: 10, fontSize: 12, color: "#8a6d2b", fontWeight: 700, background: "#fdf6e3", border: "1px solid #e8d48b", borderRadius: 999, padding: "4px 10px" }}>
+            {me.credits_balance} credits
+          </span>
+        )}
         <button onClick={exportLog}
           style={{ ...btn, marginLeft: "auto", background: "#fff", color: "#17203a", border: "1px solid #cbd5e1", fontSize: 13 }}>
           ⬇ Export build log
@@ -223,14 +235,14 @@ function ProjectView({ project, stages, onBack, onSaved }) {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {stages.map((s) => (
-          <StageCard key={s.key} stage={s} project={project} onSaved={onSaved} />
+          <StageCard key={s.key} stage={s} project={project} onSaved={onSaved} onSpent={refreshMe} />
         ))}
       </div>
     </div>
   );
 }
 
-function StageCard({ stage, project, onSaved }) {
+function StageCard({ stage, project, onSaved, onSpent }) {
   const done = project.stages?.[stage.key]?.completed;
   const unlocked = stage.order <= project.current_stage;
   const [open, setOpen] = useState(stage.order === project.current_stage);
@@ -325,6 +337,7 @@ function StageCard({ stage, project, onSaved }) {
 
           <MentorChat projectId={project.id} stageKey={stage.key}
             hasQuestions={(stage.questions || []).length > 0}
+            onSpent={onSpent}
             onDraft={(a) => setAnswers((prev) => ({ ...prev, ...a }))} />
         </div>
       )}
@@ -334,7 +347,7 @@ function StageCard({ stage, project, onSaved }) {
 
 /* ---------- Mentor chat ---------- */
 
-function MentorChat({ projectId, stageKey, hasQuestions, onDraft }) {
+function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState("");
@@ -356,6 +369,7 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft }) {
         method: "POST", body: JSON.stringify({ message }),
       });
       setMsgs((m) => [...m, { role: "assistant", content: d.reply }]);
+      onSpent?.();
     } catch (e) {
       setErr(e.message);
       setMsgs((m) => m.slice(0, -1));
@@ -405,6 +419,7 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft }) {
                 try {
                   const d = await api(`/api/projects/${projectId}/stages/${stageKey}/draft`, { method: "POST", body: "{}" });
                   onDraft(d.answers);
+                  onSpent?.();
                 } catch (e) { setErr(e.message); }
                 finally { setDrafting(false); }
               }}

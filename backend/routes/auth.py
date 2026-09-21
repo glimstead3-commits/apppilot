@@ -3,6 +3,7 @@ import secrets
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr
 
 from utils.auth import (
@@ -11,6 +12,8 @@ from utils.auth import (
 from utils.database import get_db
 
 router = APIRouter(prefix="/api/auth")
+
+_bearer_dep = HTTPBearer(auto_error=False)
 
 
 class Credentials(BaseModel):
@@ -72,3 +75,10 @@ def login(body: Credentials):
 @router.get("/me")
 def me(user=Depends(get_current_user)):
     return public_user(user)
+
+
+@router.post("/logout")
+def logout(user=Depends(get_current_user), creds=Depends(_bearer_dep)):
+    db = _db()
+    db.sessions.delete_one({"token": creds.credentials})
+    return {"ok": True}
