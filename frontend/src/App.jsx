@@ -552,6 +552,14 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
   const [answers, setAnswers] = useState(project.stages?.[stage.key]?.answers || {});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [stepIdx, setStepIdx] = useState(0);
+
+  // One step per question; the checklist becomes the final step.
+  const steps = [
+    ...(stage.questions || []).map((q) => ({ type: "q", ...q })),
+    ...(stage.checklist?.length ? [{ type: "checklist" }] : []),
+  ];
+  const step = steps[Math.min(stepIdx, steps.length - 1)];
 
   const save = async () => {
     setBusy(true); setErr("");
@@ -617,41 +625,82 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
               </p>
             </div>
           ) : (<>
-          {stage.questions?.length > 0 && (
-            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
-              {stage.questions.map((q) => (
-                <label key={q.key} style={{ fontSize: 13, fontWeight: 600, color: "#17203a" }}>
-                  {q.ask}
+          {steps.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              {/* step progress */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".08em" }}>
+                  {step.type === "checklist" ? "Final checks" : `Question ${stepIdx + 1} of ${steps.length}`}
+                </span>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {steps.map((_, i) => (
+                    <span key={i} style={{
+                      width: 18, height: 4, borderRadius: 2,
+                      background: i < stepIdx ? "#16a34a" : i === stepIdx ? "#f4c95d" : "#e2e8f0",
+                    }} />
+                  ))}
+                </div>
+              </div>
+
+              {step.type === "q" && (
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "#17203a", lineHeight: 1.4, marginBottom: 6 }}>
+                    {step.ask}
+                  </div>
+                  {step.explain && (
+                    <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 10 }}>{step.explain}</p>
+                  )}
+                  {step.example && (
+                    <div style={{ background: "#eef4ff", border: "1px solid #c7d7fe", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 13, color: "#3730a3", lineHeight: 1.55 }}>
+                      💡 <strong>A real answer looks like:</strong> {step.example}
+                    </div>
+                  )}
                   <textarea
-                    style={{ ...input, minHeight: 60, resize: "vertical" }}
-                    value={answers[q.key] || ""}
-                    onChange={(e) => setAnswers({ ...answers, [q.key]: e.target.value })}
+                    style={{ ...input, minHeight: 90, resize: "vertical", fontSize: 15 }}
+                    value={answers[step.key] || ""}
+                    onChange={(e) => setAnswers({ ...answers, [step.key]: e.target.value })}
+                    placeholder="Your answer…"
                   />
-                </label>
-              ))}
-            </div>
-          )}
+                </div>
+              )}
 
-          {stage.checklist?.length > 0 && (
-            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>Tick each when it's actually true:</p>
-              {stage.checklist.map((item, i) => (
-                <label key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "#334155", cursor: "pointer" }}>
-                  <input type="checkbox" style={{ marginTop: 2 }}
-                    checked={answers[`check:${i}`] === true}
-                    onChange={(e) => setAnswers({ ...answers, [`check:${i}`]: e.target.checked })} />
-                  <span>{item}</span>
-                </label>
-              ))}
-            </div>
-          )}
+              {step.type === "checklist" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#475569", marginBottom: 2 }}>
+                    Tick each only when it's actually true — honesty here is the whole point:
+                  </p>
+                  {stage.checklist.map((item, i) => (
+                    <label key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13.5, color: "#334155", cursor: "pointer", padding: "6px 8px", borderRadius: 6, background: answers[`check:${i}`] ? "#f0fdf4" : "transparent" }}>
+                      <input type="checkbox" style={{ marginTop: 2 }}
+                        checked={answers[`check:${i}`] === true}
+                        onChange={(e) => setAnswers({ ...answers, [`check:${i}`]: e.target.checked })} />
+                      <span>{item}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
 
-          {(stage.questions?.length > 0 || stage.checklist?.length > 0) && (
-            <div style={{ marginTop: 12 }}>
-              {err && <p style={{ color: "#b91c1c", fontSize: 13, marginBottom: 6 }}>{err}</p>}
-              <button style={btn} onClick={save} disabled={busy}>
-                {busy ? "Saving…" : done ? "Update" : "Save — pass this gate"}
-              </button>
+              {/* step navigation */}
+              <div style={{ display: "flex", gap: 10, marginTop: 16, alignItems: "center" }}>
+                {stepIdx > 0 && (
+                  <button onClick={() => { setStepIdx(stepIdx - 1); setErr(""); }}
+                    style={{ background: "#fff", color: "#475569", border: "1px solid #cbd5e1", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    ← Back
+                  </button>
+                )}
+                {stepIdx < steps.length - 1 ? (
+                  <button style={btn} onClick={() => { setStepIdx(stepIdx + 1); setErr(""); }}>
+                    Next →
+                  </button>
+                ) : (
+                  <>
+                    {err && <p style={{ color: "#b91c1c", fontSize: 13 }}>{err}</p>}
+                    <button style={btn} onClick={save} disabled={busy}>
+                      {busy ? "Saving…" : done ? "Update answers" : "Save — pass this gate"}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           )}
 
