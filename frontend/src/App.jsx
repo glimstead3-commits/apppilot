@@ -35,6 +35,7 @@ export default function App() {
   const [stages, setStages] = useState([]);
   const [view, setView] = useState("loading"); // loading | auth | reset | home | project
   const [resetToken, setResetToken] = useState("");
+  const [verifyToken, setVerifyToken] = useState("");
   const [legalDoc, setLegalDoc] = useState("");
   const [projects, setProjects] = useState([]);
   const [project, setProject] = useState(null);
@@ -45,12 +46,21 @@ export default function App() {
     if (["privacy", "terms", "security"].includes(path)) {
       setLegalDoc(path); setView("legal"); return;
     }
-    const reset = new URLSearchParams(window.location.search).get("reset");
+    if (path === "guides") { setView("guides"); return; }
+    const params = new URLSearchParams(window.location.search);
+    const reset = params.get("reset");
     if (reset) { setResetToken(reset); setView("reset"); return; }
+    const verify = params.get("verify");
+    if (verify) { setVerifyToken(verify); setView("verify"); return; }
+    if (path === "admin") setView("admin_pending"); // resolved after /me
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return setView("auth");
     api("/api/auth/me")
-      .then((u) => { setUser(u); setView("home"); loadProjects(); })
+      .then((u) => {
+        setUser(u);
+        setView((v) => v === "admin_pending" ? (u.is_admin ? "admin" : "home") : "home");
+        loadProjects();
+      })
       .catch(() => { localStorage.removeItem(TOKEN_KEY); setView("auth"); });
   }, []);
 
@@ -62,6 +72,12 @@ export default function App() {
 
   if (view === "loading") return null;
   if (view === "legal") return <LegalPage docKey={legalDoc} />;
+  if (view === "guides") return <GuidesPage />;
+  if (view === "verify")
+    return <VerifyEmail token={verifyToken} onDone={() => {
+      window.history.replaceState({}, "", "/"); setVerifyToken(""); setView("auth");
+    }} />;
+  if (view === "admin" && user?.is_admin) return <AdminPage />;
   if (view === "auth") return <Auth onDone={(u) => { setUser(u); setView("home"); loadProjects(); }} />;
   if (view === "reset")
     return <ResetPassword token={resetToken} onDone={() => {
@@ -84,6 +100,7 @@ export default function App() {
       stages={stages}
       onOpen={openProject}
       onCreated={(p) => { setProject(p); setView("project"); }}
+      onChanged={loadProjects}
       onLogout={async () => {
         try { await api("/api/auth/logout", { method: "POST", body: "{}" }); } catch {}
         localStorage.removeItem(TOKEN_KEY); setUser(null); setView("auth");
@@ -103,6 +120,7 @@ function Auth({ onDone }) {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [credits, setCredits] = useState(15);
+  const [agreed, setAgreed] = useState(false);
   useEffect(() => {
     fetch("/api/config").then((r) => r.json())
       .then((c) => setCredits(c.signup_credits ?? 15)).catch(() => {});
@@ -118,7 +136,7 @@ function Auth({ onDone }) {
       } else {
         const data = await api(`/api/auth/${mode}`, {
           method: "POST",
-          body: JSON.stringify({ email, password, name }),
+          body: JSON.stringify({ email, password, name, agreed }),
         });
         localStorage.setItem(TOKEN_KEY, data.token);
         onDone(data.user);
@@ -138,14 +156,18 @@ function Auth({ onDone }) {
           <div className="auth-headline">Learn to build your first app — <em>the right way.</em></div>
           <p className="auth-sub">AppPilot doesn't write code. It's the instructor that teaches you the professional process — what to ask your AI builder next, and how to check its work before you move on.</p>
 
-          {/* product preview — the "image" */}
-          <div className="auth-preview">
-            <div className="auth-preview-title">Your build journey</div>
-            <div className="auth-step done"><span className="d">✓</span> Define — what, who, what NOT <span className="tag">passed</span></div>
-            <div className="auth-step now"><span className="d">2</span> Architect — the decisions that cost <span className="tag">in progress</span></div>
-            <div className="auth-step"><span className="d">3</span> Foundation — repo, deploy, live URL <span className="tag">locked</span></div>
-            <div className="auth-step"><span className="d">4</span> First Slice — one real feature <span className="tag">locked</span></div>
-            <div className="auth-step"><span className="d">·</span> + 4 more stages to launch</div>
+          {/* product preview — the "image": tilted card + ghost + mentor bubble */}
+          <div className="auth-visual">
+            <div className="auth-preview-ghost" />
+            <div className="auth-preview">
+              <div className="auth-preview-title">Your build journey</div>
+              <div className="auth-step done"><span className="d">✓</span> Define — what, who, what NOT <span className="tag">passed</span></div>
+              <div className="auth-step now"><span className="d">2</span> Architect — the decisions that cost <span className="tag">in progress</span></div>
+              <div className="auth-step"><span className="d">3</span> Foundation — repo, deploy, live URL <span className="tag">locked</span></div>
+              <div className="auth-step"><span className="d">4</span> First Slice — one real feature <span className="tag">locked</span></div>
+              <div className="auth-step"><span className="d">·</span> + 4 more stages to launch</div>
+            </div>
+            <div className="auth-bubble">"Before you build, answer this: who is the first real user?"</div>
           </div>
 
           <div className="auth-proof">
@@ -181,6 +203,13 @@ function Auth({ onDone }) {
                 placeholder={mode === "signup" ? "8+ characters" : "Your password"} />
             </>
           )}
+          {mode === "signup" && (
+            <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, color: "#64748b", marginBottom: 14, cursor: "pointer" }}>
+              <input type="checkbox" style={{ marginTop: 2, width: "auto" }} checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)} />
+              <span>I agree to the <a href="/terms" target="_blank" style={{ color: "#8a6d2b" }}>Terms</a> and <a href="/privacy" target="_blank" style={{ color: "#8a6d2b" }}>Privacy Policy</a></span>
+            </label>
+          )}
           {err && <p className="auth-err">{err}</p>}
           {sent && mode === "forgot" && (
             <p style={{ color: "#15803d", fontSize: 13, marginBottom: 12 }}>
@@ -214,9 +243,28 @@ function Auth({ onDone }) {
 
 /* ---------- Home: projects ---------- */
 
-function Home({ user, projects, stages, onOpen, onCreated, onLogout }) {
+function Home({ user, projects, stages, onOpen, onCreated, onLogout, onChanged }) {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackSent, setFeedbackSent] = useState(false);
+  const [resent, setResent] = useState(false);
+
+  const sendFeedback = async () => {
+    await api("/api/feedback", { method: "POST", body: JSON.stringify({ message: feedbackText }) }).catch(() => {});
+    setFeedbackSent(true); setFeedbackText("");
+  };
+
+  const deleteAccount = async () => {
+    const pw = window.prompt("Delete your account and ALL projects permanently? Type your password to confirm:");
+    if (!pw) return;
+    try {
+      await api("/api/auth/account", { method: "DELETE", body: JSON.stringify({ password: pw }) });
+      localStorage.removeItem(TOKEN_KEY);
+      window.location.href = "/";
+    } catch (e) { alert(e.message); }
+  };
 
   const create = async (e) => {
     e.preventDefault();
@@ -238,9 +286,37 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout }) {
         <div style={{ marginLeft: "auto", textAlign: "right", fontSize: 13, color: "#64748b" }}>
           <div>{user.name || user.email}</div>
           <div>{user.credits_balance} credits · {user.plan} plan</div>
-          <button onClick={onLogout} style={{ background: "none", border: "none", color: "#8a6d2b", cursor: "pointer", fontSize: 12, padding: 0 }}>Log out</button>
+          <div>
+            {user.is_admin && <a href="/admin" style={{ color: "#8a6d2b", fontSize: 12, textDecoration: "none", marginRight: 12 }}>Admin</a>}
+            <a href="/guides" style={{ color: "#8a6d2b", fontSize: 12, textDecoration: "none", marginRight: 12 }}>Guides</a>
+            <button onClick={() => setFeedbackOpen(!feedbackOpen)} style={{ background: "none", border: "none", color: "#8a6d2b", cursor: "pointer", fontSize: 12, padding: 0, marginRight: 12 }}>Feedback</button>
+            <button onClick={onLogout} style={{ background: "none", border: "none", color: "#8a6d2b", cursor: "pointer", fontSize: 12, padding: 0 }}>Log out</button>
+          </div>
         </div>
       </div>
+
+      {!user.email_verified && (
+        <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#92400e" }}>
+          📧 Verify your email — check your inbox for a confirmation link.{" "}
+          <button onClick={async () => { await api("/api/auth/resend-verify", { method: "POST", body: "{}" }).catch(() => {}); setResent(true); }}
+            disabled={resent}
+            style={{ background: "none", border: "none", color: "#8a6d2b", fontWeight: 700, cursor: "pointer", fontSize: 12, padding: 0 }}>
+            {resent ? "Sent ✓" : "Resend"}
+          </button>
+        </div>
+      )}
+
+      {feedbackOpen && (
+        <div style={{ ...card, marginBottom: 16, background: "#f8fafc" }}>
+          <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>What's confusing, broken, or missing?</p>
+          <textarea style={{ ...input, minHeight: 70, resize: "vertical" }} value={feedbackText}
+            onChange={(e) => setFeedbackText(e.target.value)}
+            placeholder="Tell us — this is how the product gets better" />
+          {feedbackSent
+            ? <p style={{ fontSize: 12, color: "#15803d", marginTop: 6 }}>Thanks — sent ✓</p>
+            : <button style={{ ...btn, marginTop: 8, padding: "7px 14px", fontSize: 13 }} onClick={sendFeedback} disabled={!feedbackText.trim()}>Send feedback</button>}
+        </div>
+      )}
 
       <form onSubmit={create} style={{ display: "flex", gap: 8, marginBottom: 24 }}>
         <input style={{ ...input, marginTop: 0, flex: 1 }} placeholder="New app idea — e.g. 'Dog walking tracker'"
@@ -271,7 +347,7 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout }) {
                   e.stopPropagation();
                   if (window.confirm(`Delete "${p.name}"? This can't be undone.`)) {
                     await api(`/api/projects/${p.id}`, { method: "DELETE" });
-                    loadProjects();
+                    onChanged();
                   }
                 }}
                 style={{ color: "#cbd5e1", fontSize: 16, padding: "0 4px" }} title="Delete project">✕</span>
@@ -280,6 +356,17 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout }) {
           ))}
         </div>
       )}
+
+      <div style={{ marginTop: 48, paddingTop: 16, borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", fontSize: 12, color: "#94a3b8" }}>
+        <span>
+          <a href="/privacy" style={{ color: "#94a3b8", marginRight: 12 }}>Privacy</a>
+          <a href="/terms" style={{ color: "#94a3b8", marginRight: 12 }}>Terms</a>
+          <a href="/security" style={{ color: "#94a3b8" }}>Security</a>
+        </span>
+        <button onClick={deleteAccount} style={{ background: "none", border: "none", color: "#dc2626", fontSize: 12, cursor: "pointer", padding: 0 }}>
+          Delete account
+        </button>
+      </div>
     </div>
   );
 }
@@ -669,6 +756,102 @@ function GuidesPage() {
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ---------- Email verification (via emailed link) ---------- */
+
+function VerifyEmail({ token, onDone }) {
+  const [state, setState] = useState("checking");
+  useEffect(() => {
+    api(`/api/auth/verify?token=${encodeURIComponent(token)}`)
+      .then(() => setState("ok"))
+      .catch(() => setState("bad"));
+  }, [token]);
+  return (
+    <div className="auth-wrap">
+      <div className="auth-panel" style={{ flex: "none", width: "100%" }}>
+        <div className="auth-card" style={{ textAlign: "center" }}>
+          <h2>{state === "checking" ? "Verifying…" : state === "ok" ? "Email verified ✓" : "Link invalid"}</h2>
+          <p className="hint" style={{ marginBottom: 20 }}>
+            {state === "ok" ? "You're all set." : state === "bad" ? "This link is invalid or already used." : ""}
+          </p>
+          <button className="auth-cta" onClick={onDone}>Continue →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Admin (/admin — is_admin accounts only) ---------- */
+
+function AdminPage() {
+  const [users, setUsers] = useState([]);
+  const [fb, setFb] = useState([]);
+  const [err, setErr] = useState("");
+
+  const load = () => {
+    api("/api/admin/users").then((d) => setUsers(d.users)).catch((e) => setErr(e.message));
+    api("/api/admin/feedback").then((d) => setFb(d.feedback)).catch(() => {});
+  };
+  useEffect(load, []);
+
+  const act = async (path, body) => {
+    try { await api(`/api/admin${path}`, { method: "POST", body: JSON.stringify(body) }); load(); }
+    catch (e) { alert(e.message); }
+  };
+
+  return (
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: "40px 20px" }}>
+      <a href="/" style={{ fontSize: 13, color: "#8a6d2b", textDecoration: "none" }}>← Back to app</a>
+      <h1 style={{ fontSize: 24, margin: "14px 0 18px" }}>Admin</h1>
+      {err && <p style={{ color: "#b91c1c" }}>{err}</p>}
+
+      <h3 style={{ fontSize: 14, color: "#475569", marginBottom: 8 }}>Users ({users.length})</h3>
+      <div style={{ ...card, padding: 0, overflow: "hidden", marginBottom: 28 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <thead>
+            <tr style={{ background: "#f8fafc", textAlign: "left" }}>
+              <th style={{ padding: "8px 12px" }}>User</th>
+              <th style={{ padding: "8px 12px" }}>Plan</th>
+              <th style={{ padding: "8px 12px" }}>Credits</th>
+              <th style={{ padding: "8px 12px" }}>Projects</th>
+              <th style={{ padding: "8px 12px" }}>Verified</th>
+              <th style={{ padding: "8px 12px" }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u.email} style={{ borderTop: "1px solid #eef1f6" }}>
+                <td style={{ padding: "8px 12px" }}>{u.name || "—"}<br /><span style={{ color: "#94a3b8", fontSize: 12 }}>{u.email}</span></td>
+                <td style={{ padding: "8px 12px" }}>{u.plan}</td>
+                <td style={{ padding: "8px 12px" }}>{u.credits_balance}</td>
+                <td style={{ padding: "8px 12px" }}>{u.projects}</td>
+                <td style={{ padding: "8px 12px" }}>{u.email_verified ? "✓" : "—"}</td>
+                <td style={{ padding: "8px 12px", whiteSpace: "nowrap" }}>
+                  <button onClick={() => act(`/users/${u.email}/plan`, { plan: u.plan === "paid" ? "free" : "paid" })}
+                    style={{ fontSize: 11, cursor: "pointer", marginRight: 6 }}>
+                    {u.plan === "paid" ? "→ free" : "→ paid"}
+                  </button>
+                  <button onClick={() => { const n = window.prompt("Grant how many credits?", "25"); if (n) act(`/users/${u.email}/credits`, { amount: parseInt(n) || 0, reason: "admin_ui" }); }}
+                    style={{ fontSize: 11, cursor: "pointer" }}>+credits</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style={{ fontSize: 14, color: "#475569", marginBottom: 8 }}>Feedback ({fb.length})</h3>
+      {fb.length === 0
+        ? <p style={{ fontSize: 13, color: "#94a3b8" }}>No feedback yet.</p>
+        : fb.map((f, i) => (
+            <div key={i} style={{ ...card, marginBottom: 8, padding: "10px 14px" }}>
+              <div style={{ fontSize: 11, color: "#94a3b8" }}>{f.email} · {(f.created_at || "").slice(0, 10)}</div>
+              <div style={{ fontSize: 13, marginTop: 4 }}>{f.message}</div>
+            </div>
+          ))}
     </div>
   );
 }
