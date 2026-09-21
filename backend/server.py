@@ -111,6 +111,8 @@ def health():
         # Shows whether the mentor is wired up — never exposes the key itself.
         "mentor": os.environ.get("AI_PROVIDER", "anthropic")
                   if os.environ.get("AI_API_KEY", "").strip() else "offline",
+        # Last mentor AI error — enough to diagnose without log access.
+        "mentor_error": mentor_routes.LAST_AI_ERROR or None,
     }
 
 

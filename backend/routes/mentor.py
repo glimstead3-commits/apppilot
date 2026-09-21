@@ -36,6 +36,10 @@ router = APIRouter(prefix="/api/projects")
 
 MENTOR_COST = 1
 
+# Last AI error, surfaced via /api/health — diagnosing "mentor is offline"
+# shouldn't require digging through platform logs.
+LAST_AI_ERROR = ""
+
 PROVIDERS = {
     "anthropic": {
         "url": "https://api.anthropic.com/v1/messages",
@@ -191,11 +195,14 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
     })
 
     ai_reply = ""
+    global LAST_AI_ERROR
     if ai_on:
         try:
             ai_reply = _call_ai(_system_prompt(stage, p), history)
+            LAST_AI_ERROR = ""
         except Exception as e:
-            print(f"[mentor] AI call failed ({os.environ.get('AI_PROVIDER','anthropic')}): {e}")
+            LAST_AI_ERROR = f"{os.environ.get('AI_PROVIDER','anthropic')}: {e}"
+            print(f"[mentor] AI call failed: {LAST_AI_ERROR}")
             ai_reply = ""
 
     if ai_reply:
