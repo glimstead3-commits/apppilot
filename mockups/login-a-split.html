@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AppPilot — Mockup A: Split-screen</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", Inter, sans-serif; height: 100vh; display: flex; }
+
+  /* LEFT — brand panel */
+  .brand {
+    flex: 1.1; padding: 56px; color: #fff;
+    background: linear-gradient(160deg, #17203a 0%, #24304f 55%, #2e3d63 100%);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: 0.02em; }
+  .logo-dot { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg,#f4c95d,#e0a71f);
+    display: flex; align-items: center; justify-content: center; color: #17203a; font-size: 16px; }
+  .headline { font-size: 34px; font-weight: 800; line-height: 1.2; margin: 48px 0 16px; max-width: 440px; }
+  .headline em { color: #f4c95d; font-style: normal; }
+  .sub { color: #b8c2d8; font-size: 16px; line-height: 1.6; max-width: 420px; }
+  .proof { margin-top: 44px; display: flex; flex-direction: column; gap: 14px; }
+  .proof div { display: flex; gap: 12px; align-items: center; color: #cfd8ea; font-size: 14px; }
+  .proof .n { width: 24px; height: 24px; border-radius: 50%; background: rgba(244,201,93,.15);
+    color: #f4c95d; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .foot { color: #7e8dab; font-size: 12px; }
+
+  /* RIGHT — form */
+  .panel { flex: 1; display: flex; align-items: center; justify-content: center; background: #f7f9fc; padding: 40px; }
+  .card { background: #fff; border: 1px solid #e5eaf2; border-radius: 16px; padding: 40px; width: 100%; max-width: 400px;
+    box-shadow: 0 12px 40px rgba(23,32,58,.08); }
+  .card h2 { font-size: 22px; color: #17203a; margin-bottom: 6px; }
+  .card .hint { font-size: 14px; color: #64748b; margin-bottom: 26px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+  input { width: 100%; padding: 11px 13px; border: 1px solid #dbe2ee; border-radius: 9px; font-size: 15px; margin-bottom: 16px; }
+  input:focus { outline: 2px solid #c9a22755; border-color: #c9a227; }
+  .cta { width: 100%; padding: 12px; background: #17203a; color: #fff; border: none; border-radius: 9px;
+    font-size: 15px; font-weight: 700; cursor: pointer; }
+  .cta:hover { background: #24304f; }
+  .swap { text-align: center; margin-top: 18px; font-size: 13px; color: #64748b; }
+  .swap a { color: #8a6d2b; font-weight: 600; text-decoration: none; }
+  .free { text-align: center; margin-top: 14px; font-size: 12px; color: #94a3b8; }
+  .free b { color: #16a34a; }
+
+  @media (max-width: 820px) { .brand { display: none; } }
+</style>
+</head>
+<body>
+  <div class="brand">
+    <div class="logo"><span class="logo-dot">▲</span> AppPilot</div>
+    <div>
+      <div class="headline">Build your first app <em>without getting lost.</em></div>
+      <p class="sub">A stage-gated wizard with an AI mentor that tells you what to ask your AI builder next — and how to check it actually worked.</p>
+      <div class="proof">
+        <div><span class="n">1</span> Define your app in plain English</div>
+        <div><span class="n">2</span> Guided stages — never wonder "what next?"</div>
+        <div><span class="n">3</span> Gates keep you honest — no skipping ahead</div>
+        <div><span class="n">4</span> Export a build log for your project's repo</div>
+      </div>
+    </div>
+    <div class="foot">Built by a novice who got lost — so you don't have to.</div>
+  </div>
+
+  <div class="panel">
+    <div class="card">
+      <h2>Create your account</h2>
+      <p class="hint">Start your first guided build</p>
+      <label>Name</label>
+      <input placeholder="Your name">
+      <label>Email</label>
+      <input type="email" placeholder="you@example.com">
+      <label>Password</label>
+      <input type="password" placeholder="8+ characters">
+      <button class="cta">Create account →</button>
+      <div class="swap">Already have an account? <a href="#">Log in</a></div>
+      <div class="free"><b>50 free credits</b> included · no card required</div>
+    </div>
+  </div>
+</body>
+</html>

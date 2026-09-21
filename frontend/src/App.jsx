@@ -106,28 +106,61 @@ function Auth({ onDone }) {
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: "80px auto", padding: "0 20px" }}>
-      <p style={{ fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a6d2b", fontWeight: 700 }}>AppPilot</p>
-      <h1 style={{ fontSize: 28, margin: "8px 0 20px" }}>Build your app the right way.</h1>
-      <form onSubmit={submit} style={{ ...card, display: "flex", flexDirection: "column", gap: 12 }}>
-        {mode === "signup" && (
-          <label style={{ fontSize: 13, fontWeight: 600 }}>Your name
-            <input style={input} value={name} onChange={(e) => setName(e.target.value)} />
-          </label>
-        )}
-        <label style={{ fontSize: 13, fontWeight: 600 }}>Email
-          <input style={input} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <label style={{ fontSize: 13, fontWeight: 600 }}>Password {mode === "signup" && <span style={{ fontWeight: 400, color: "#64748b" }}>(8+ characters)</span>}
-          <input style={input} type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-        </label>
-        {err && <p style={{ color: "#b91c1c", fontSize: 13 }}>{err}</p>}
-        <button style={btn} disabled={busy}>{busy ? "…" : mode === "login" ? "Log in" : "Create account"}</button>
-        <button type="button" onClick={() => setMode(mode === "login" ? "signup" : "login")}
-          style={{ background: "none", border: "none", color: "#8a6d2b", fontSize: 13, cursor: "pointer" }}>
-          {mode === "login" ? "New here? Create an account — 50 free credits" : "Already have an account? Log in"}
-        </button>
-      </form>
+    <div className="auth-wrap">
+      <div className="auth-brand">
+        <div className="auth-logo"><span className="auth-logo-dot">▲</span> AppPilot</div>
+        <div>
+          <div className="auth-headline">Learn to build your first app — <em>the right way.</em></div>
+          <p className="auth-sub">AppPilot doesn't write code. It's the instructor that teaches you the professional process — what to ask your AI builder next, and how to check its work before you move on.</p>
+
+          {/* product preview — the "image" */}
+          <div className="auth-preview">
+            <div className="auth-preview-title">Your build journey</div>
+            <div className="auth-step done"><span className="d">✓</span> Define — what, who, what NOT <span className="tag">passed</span></div>
+            <div className="auth-step now"><span className="d">2</span> Architect — the decisions that cost <span className="tag">in progress</span></div>
+            <div className="auth-step"><span className="d">3</span> Foundation — repo, deploy, live URL <span className="tag">locked</span></div>
+            <div className="auth-step"><span className="d">4</span> First Slice — one real feature <span className="tag">locked</span></div>
+            <div className="auth-step"><span className="d">·</span> + 4 more stages to launch</div>
+          </div>
+
+          <div className="auth-proof">
+            <div><span className="n">1</span> Learn the process professionals use — stage by stage</div>
+            <div><span className="n">2</span> Know exactly what to ask your AI builder next</div>
+            <div><span className="n">3</span> Check its work — even if you can't read code</div>
+            <div><span className="n">4</span> Gates keep you honest — no skipping ahead</div>
+          </div>
+        </div>
+        <div className="auth-foot">Built by a novice who got lost — so you don't have to.</div>
+      </div>
+
+      <div className="auth-panel">
+        <form onSubmit={submit} className="auth-card">
+          <h2>{mode === "login" ? "Welcome back" : "Create your account"}</h2>
+          <p className="hint">{mode === "login" ? "Pick up where you left off" : "Start your first guided build"}</p>
+          {mode === "signup" && (
+            <>
+              <label>Name</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+            </>
+          )}
+          <label>Email</label>
+          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          <label>Password</label>
+          <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+            placeholder={mode === "signup" ? "8+ characters" : "Your password"} />
+          {err && <p className="auth-err">{err}</p>}
+          <button className="auth-cta" disabled={busy}>
+            {busy ? "…" : mode === "login" ? "Log in →" : "Create account →"}
+          </button>
+          <div className="auth-swap">
+            {mode === "login" ? "New here? " : "Already have an account? "}
+            <button type="button" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setErr(""); }}>
+              {mode === "login" ? "Create an account" : "Log in"}
+            </button>
+          </div>
+          <div className="auth-free"><b>50 free credits</b> included · no card required</div>
+        </form>
+      </div>
     </div>
   );
 }

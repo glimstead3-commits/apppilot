@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AppPilot — Mockup B: Centered minimal</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Inter, sans-serif; min-height: 100vh;
+    background: radial-gradient(1200px 600px at 50% -10%, #fdf3d7 0%, #f7f9fc 55%, #eef2f8 100%);
+    display: flex; flex-direction: column; align-items: center; padding: 48px 20px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: #17203a; margin-bottom: 40px; }
+  .logo-dot { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg,#f4c95d,#e0a71f);
+    display: flex; align-items: center; justify-content: center; font-size: 16px; color:#17203a; }
+
+  .card { background: #fff; border: 1px solid #e5eaf2; border-radius: 18px; padding: 38px; width: 100%; max-width: 420px;
+    box-shadow: 0 16px 50px rgba(23,32,58,.10); }
+  .card h2 { font-size: 24px; color: #17203a; text-align: center; }
+  .card .hint { font-size: 14px; color: #64748b; text-align: center; margin: 8px 0 28px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+  input { width: 100%; padding: 11px 13px; border: 1px solid #dbe2ee; border-radius: 9px; font-size: 15px; margin-bottom: 16px; }
+  input:focus { outline: 2px solid #c9a22755; border-color: #c9a227; }
+  .cta { width: 100%; padding: 13px; background: linear-gradient(135deg,#f4c95d,#e0a71f); color: #17203a; border: none;
+    border-radius: 9px; font-size: 15px; font-weight: 800; cursor: pointer; }
+  .swap { text-align: center; margin-top: 18px; font-size: 13px; color: #64748b; }
+  .swap a { color: #8a6d2b; font-weight: 600; text-decoration: none; }
+  .badge { display: inline-block; background: #eefbf2; color: #15803d; font-size: 12px; font-weight: 700;
+    border-radius: 999px; padding: 4px 12px; margin-bottom: 20px; }
+  .center { text-align: center; }
+
+  .stages { margin-top: 40px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 560px; }
+  .stages span { font-size: 12px; color: #64748b; background: #fff; border: 1px solid #e5eaf2; border-radius: 999px; padding: 6px 14px; }
+  .stages span:first-child { background: #17203a; color: #f4c95d; border-color: #17203a; font-weight: 700; }
+  .tag { margin-top: 18px; font-size: 13px; color: #94a3b8; }
+</style>
+</head>
+<body>
+  <div class="logo"><span class="logo-dot">▲</span> AppPilot</div>
+
+  <div class="card">
+    <div class="center"><span class="badge">50 free credits · no card</span></div>
+    <h2>Start building</h2>
+    <p class="hint">Your guided path from idea to launched app</p>
+    <label>Name</label>
+    <input placeholder="Your name">
+    <label>Email</label>
+    <input type="email" placeholder="you@example.com">
+    <label>Password</label>
+    <input type="password" placeholder="8+ characters">
+    <button class="cta">Create free account</button>
+    <div class="swap">Already have an account? <a href="#">Log in</a></div>
+  </div>
+
+  <div class="stages">
+    <span>1 Define</span><span>2 Architect</span><span>3 Foundation</span><span>4 First Slice</span>
+    <span>5 Features</span><span>6 Harden</span><span>7 Launch</span><span>8 Operate</span>
+  </div>
+  <div class="tag">An AI mentor at every stage — so you always know what's next.</div>
+</body>
+</html>

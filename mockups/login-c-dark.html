@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AppPilot — Mockup C: Dark product-led</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", Inter, sans-serif; min-height: 100vh; color: #e6ebf5;
+    background: #0d1424; display: flex; align-items: center; justify-content: center; padding: 40px 20px;
+    background-image: radial-gradient(700px 400px at 15% 20%, rgba(244,201,93,.08), transparent 60%),
+                      radial-gradient(800px 500px at 85% 80%, rgba(59,130,246,.10), transparent 60%); }
+  .wrap { display: flex; gap: 64px; align-items: center; max-width: 1020px; width: 100%; flex-wrap: wrap; }
+
+  .left { flex: 1.2; min-width: 320px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; margin-bottom: 36px; }
+  .logo-dot { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg,#f4c95d,#e0a71f);
+    display: flex; align-items: center; justify-content: center; color: #0d1424; font-size: 16px; }
+  h1 { font-size: 38px; font-weight: 800; line-height: 1.15; margin-bottom: 16px; }
+  h1 em { color: #f4c95d; font-style: normal; }
+  .sub { color: #9aa7c2; font-size: 16px; line-height: 1.6; max-width: 460px; margin-bottom: 32px; }
+
+  /* mini stage preview */
+  .journey { display: flex; flex-direction: column; gap: 10px; max-width: 460px; }
+  .step { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+  .step .dot { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 700; }
+  .step.done .dot { background: #16a34a; color: #fff; }
+  .step.now { border-color: rgba(244,201,93,.5); background: rgba(244,201,93,.06); }
+  .step.now .dot { background: #f4c95d; color: #0d1424; }
+  .step .dot { background: rgba(255,255,255,.1); color: #9aa7c2; }
+  .step small { color: #7e8dab; margin-left: auto; }
+
+  .card { flex: 1; min-width: 320px; max-width: 400px; background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1); border-radius: 18px; padding: 36px;
+    backdrop-filter: blur(8px); }
+  .card h2 { font-size: 20px; margin-bottom: 4px; }
+  .card .hint { font-size: 13px; color: #9aa7c2; margin-bottom: 24px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: #9aa7c2; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+  input { width: 100%; padding: 11px 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 9px;
+    font-size: 15px; margin-bottom: 16px; background: rgba(255,255,255,.06); color: #fff; }
+  input::placeholder { color: #5b6884; }
+  input:focus { outline: 2px solid rgba(244,201,93,.4); border-color: #f4c95d; }
+  .cta { width: 100%; padding: 13px; background: linear-gradient(135deg,#f4c95d,#e0a71f); color: #0d1424;
+    border: none; border-radius: 9px; font-size: 15px; font-weight: 800; cursor: pointer; }
+  .swap { text-align: center; margin-top: 18px; font-size: 13px; color: #9aa7c2; }
+  .swap a { color: #f4c95d; font-weight: 600; text-decoration: none; }
+  .free { text-align: center; margin-top: 14px; font-size: 12px; color: #7e8dab; }
+  .free b { color: #4ade80; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="left">
+      <div class="logo"><span class="logo-dot">▲</span> AppPilot</div>
+      <h1>The map for <em>AI-built</em> apps.</h1>
+      <p class="sub">AI writes the code. AppPilot tells you what to ask for, how to check it worked, and when you're ready for the next stage.</p>
+      <div class="journey">
+        <div class="step done"><span class="dot">✓</span> Define — what, who, and what NOT <small>passed</small></div>
+        <div class="step now"><span class="dot">2</span> Architect — decisions that cost to change <small>in progress</small></div>
+        <div class="step"><span class="dot">3</span> Foundation — repo, deploy, live URL <small>locked</small></div>
+        <div class="step"><span class="dot">4</span> First Slice — one real feature end-to-end <small>locked</small></div>
+        <div class="step"><span class="dot">·</span> … 4 more stages to launch <small></small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Create your account</h2>
+      <p class="hint">Guided, gated, honest progress</p>
+      <label>Name</label>
+      <input placeholder="Your name">
+      <label>Email</label>
+      <input type="email" placeholder="you@example.com">
+      <label>Password</label>
+      <input type="password" placeholder="8+ characters">
+      <button class="cta">Start your build →</button>
+      <div class="swap">Have an account? <a href="#">Log in</a></div>
+      <div class="free"><b>50 free credits</b> · stages 1–2 free · no card</div>
+    </div>
+  </div>
+</body>
+</html>
