@@ -178,7 +178,12 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout }) {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700 }}>{p.name}</div>
                 <div style={{ fontSize: 12, color: "#64748b" }}>
-                  Stage {p.current_stage} — {stages[p.current_stage]?.title || ""}
+                  {(p.current_stage ?? 0) >= stages.length
+                    ? "All stages complete 🎉"
+                    : `Stage ${(p.current_stage ?? 0) + 1} of ${stages.length} — ${stages[p.current_stage]?.title || ""}`}
+                </div>
+                <div style={{ height: 4, background: "#e2e8f0", borderRadius: 2, marginTop: 6 }}>
+                  <div style={{ height: 4, borderRadius: 2, background: "#2563eb", width: `${Math.round(((p.current_stage ?? 0) / stages.length) * 100)}%` }} />
                 </div>
               </div>
               <span
