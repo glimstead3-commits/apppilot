@@ -58,6 +58,18 @@
         "body": "No abusive use: don't attempt to access other users' data, flood the service, or use the mentor to generate harmful content. We may suspend accounts that abuse the service."
       },
       {
+        "h": "Disclaimer of warranties",
+        "body": "AppPilot is provided \"as is\" and \"as available\" without warranties of any kind, express or implied. We do not warrant that guidance, checklists, mentor replies, stage content, or generated documents are accurate, complete, current, or suitable for your situation. You use the service at your own risk and are solely responsible for verifying any guidance before acting on it — especially security, legal, and financial decisions."
+      },
+      {
+        "h": "Limitation of liability",
+        "body": "To the maximum extent permitted by law, AppPilot and its operator are not liable for any indirect, incidental, consequential, or special damages — including lost profits, lost data, security incidents, or business interruption — arising from use of the service or reliance on its content, even if advised of the possibility. Our total liability for any claim is limited to the amount you paid us in the 12 months before the claim (or £50 if you paid nothing)."
+      },
+      {
+        "h": "Your responsibility",
+        "body": "You are responsible for your own app: its code, its security, its legal compliance, and its users. AppPilot teaches a process — following it does not guarantee a secure, compliant, or successful product. Deployments, code, and infrastructure you create with other tools are entirely yours."
+      },
+      {
         "h": "Service status",
         "body": "This is an early-stage product. We aim for reliability but offer no uptime guarantee. Keep your own copies of anything important (the build-log export exists for this)."
       },
@@ -90,6 +102,10 @@
       {
         "h": "Known limitations",
         "body": "We have not yet undergone a formal security audit or certification (SOC 2, ISO 27001). Email delivery for password resets is optional and may not be enabled. This page describes real measures, not aspirations — if it's listed here, it's implemented and tested."
+      },
+      {
+        "h": "Guidance, not guarantees",
+        "body": "The security checklist and guided steps in AppPilot are educational. Completing them improves your app's security but cannot guarantee it — no checklist can. Security is an ongoing practice, and you remain responsible for your own app's safety and compliance."
       },
       {
         "h": "Report a problem",
