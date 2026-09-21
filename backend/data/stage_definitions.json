@@ -4,14 +4,29 @@
       "key": "define",
       "order": 0,
       "title": "Define",
-      "plain": "Write down what you're building in plain English — who it's for, the 3 things it must do, and what you're NOT building.",
+      "plain": "Write down what you're building in plain English \u2014 who it's for, the 3 things it must do, and what you're NOT building.",
       "why": "Code is cheap to write and expensive to change. An hour of questions here beats a month of rebuilding. The 'not doing' list is what makes a project finishable.",
       "questions": [
-        { "key": "one_sentence", "ask": "Finish this: 'This app lets ___ do ___'" },
-        { "key": "first_user", "ask": "Who is the first real user? A named person or a type — not 'everyone'." },
-        { "key": "must_do", "ask": "What are the 3 things it must do on day one?" },
-        { "key": "not_doing", "ask": "What are you deliberately NOT building in version 1?" },
-        { "key": "launched_means", "ask": "What does 'launched' mean — the moment you'll call it done?" }
+        {
+          "key": "one_sentence",
+          "ask": "Finish this: 'This app lets ___ do ___'"
+        },
+        {
+          "key": "first_user",
+          "ask": "Who is the first real user? A named person or a type \u2014 not 'everyone'."
+        },
+        {
+          "key": "must_do",
+          "ask": "What are the 3 things it must do on day one?"
+        },
+        {
+          "key": "not_doing",
+          "ask": "What are you deliberately NOT building in version 1?"
+        },
+        {
+          "key": "launched_means",
+          "ask": "What does 'launched' mean \u2014 the moment you'll call it done?"
+        }
       ],
       "gate": "You can explain the app to a stranger in 30 seconds, and the not-doing list makes you slightly uncomfortable."
     },
@@ -22,44 +37,77 @@
       "plain": "Decide only the things that are expensive to change later: who can see whose data, where secrets live, what it talks to.",
       "why": "Get these wrong and you pay forever; get them right and everything else is fast and loose.",
       "questions": [
-        { "key": "data_isolation", "ask": "Can user A ever see user B's data? What's the worst that happens if they do?" },
-        { "key": "config_location", "ask": "What changes per user/deployment? That belongs in the database, never in code." },
-        { "key": "secrets", "ask": "What keys/passwords does it need? They live in env vars — never the repo." },
-        { "key": "external_deps", "ask": "What does it talk to (payments, email, AI)? What's the fallback if it's down?" },
-        { "key": "data_model", "ask": "Name the 5–10 core 'things' (e.g. user, project, payment) and how they relate." }
+        {
+          "key": "data_isolation",
+          "ask": "Can user A ever see user B's data? What's the worst that happens if they do?"
+        },
+        {
+          "key": "config_location",
+          "ask": "What changes per user/deployment? That belongs in the database, never in code."
+        },
+        {
+          "key": "secrets",
+          "ask": "What keys/passwords does it need? They live in env vars \u2014 never the repo."
+        },
+        {
+          "key": "external_deps",
+          "ask": "What does it talk to (payments, email, AI)? What's the fallback if it's down?"
+        },
+        {
+          "key": "data_model",
+          "ask": "Name the 5\u201310 core 'things' (e.g. user, project, payment) and how they relate."
+        }
       ],
-      "gate": "Every decision is written down WITH its reasoning — and the 'if wrong, how bad?' answers are all small."
+      "gate": "Every decision is written down WITH its reasoning \u2014 and the 'if wrong, how bad?' answers are all small."
     },
     {
       "key": "foundation",
       "order": 2,
       "title": "Foundation",
-      "plain": "The boring plumbing: repo on GitHub, database, a blank page live on a real URL — before any features.",
+      "plain": "The boring plumbing: repo on GitHub, database, a blank page live on a real URL \u2014 before any features.",
       "why": "Deploying 'hello world' on day one flushes out every environment problem while the stakes are zero.",
       "guided_steps": [
-        "Create the GitHub repo: gh auth login (once) → gh repo create <name> --private --source=. --push — run inside the project folder",
-        "Deploy on Render: Dashboard → New → Blueprint → pick your repo → it reads render.yaml and fills in build/start commands",
-        "Set env vars in Render → Environment: MONGO_URL (database connection string — change the db name at the end to your app's name)",
-        "Click Deploy → wait ~3 min → open your URL and check it loads",
+        "Create the GitHub repo: gh auth login (once) \u2192 gh repo create <name> --private --source=. --push \u2014 run inside the project folder",
+        "Deploy on Render: Dashboard \u2192 New \u2192 Blueprint \u2192 pick your repo \u2192 it reads render.yaml and fills in build/start commands",
+        "Set env vars in Render \u2192 Environment: MONGO_URL (database connection string \u2014 change the db name at the end to your app's name)",
+        "Click Deploy \u2192 wait ~3 min \u2192 open your URL and check it loads",
         "Verify the pipeline: push any small change to main and watch it redeploy by itself"
       ],
-      "gate": "Push to main → live URL updates → page loads. You could break it right now and recover in under 5 minutes (revert the commit)."
+      "gate": "Push to main \u2192 live URL updates \u2192 page loads. You could break it right now and recover in under 5 minutes (revert the commit).",
+      "checklist": [
+        "GitHub repo created and code pushed to main",
+        "Render web service created (Blueprint or manual)",
+        "MONGO_URL set in Render Environment \u2014 database connected",
+        "Live URL loads the page",
+        "Pushed a small change and watched it auto-deploy"
+      ]
     },
     {
       "key": "first_slice",
       "order": 3,
       "title": "First Slice",
-      "plain": "ONE real feature end to end — a user clicks something and real data moves through the whole system.",
-      "why": "A slice is demonstrable — you can click it and know it works. Layers give you 80% of nothing; a slice gives you 100% of something.",
-      "gate": "A stranger could perform the action without you explaining anything — and you've watched it work, not just believed it works."
+      "plain": "ONE real feature end to end \u2014 a user clicks something and real data moves through the whole system.",
+      "why": "A slice is demonstrable \u2014 you can click it and know it works. Layers give you 80% of nothing; a slice gives you 100% of something.",
+      "gate": "A stranger could perform the action without you explaining anything \u2014 and you've watched it work, not just believed it works.",
+      "checklist": [
+        "Picked the single most valuable action a user can take",
+        "Built just enough UI \u2192 API \u2192 database for that one action",
+        "Verified it end-to-end with real-ish data",
+        "A stranger could do it without you explaining"
+      ]
     },
     {
       "key": "feature_slices",
       "order": 4,
       "title": "Feature Slices",
-      "plain": "The rest of the must-do features — one thin slice at a time, each deployed and verified before the next starts.",
+      "plain": "The rest of the must-do features \u2014 one thin slice at a time, each deployed and verified before the next starts.",
       "why": "Each slice is small enough to revert in seconds and complete enough to show a user.",
-      "gate": "Every must-do from Stage 0 works on the live URL — and nothing from the not-doing list snuck in."
+      "gate": "Every must-do from Stage 0 works on the live URL \u2014 and nothing from the not-doing list snuck in.",
+      "checklist": [
+        "Every must-do item from Stage 0 works on the live URL",
+        "Each slice was deployed and verified before starting the next",
+        "Nothing from the not-doing list snuck in"
+      ]
     },
     {
       "key": "harden",
@@ -67,23 +115,42 @@
       "title": "Harden",
       "plain": "Make it safe for strangers: permissions, validation, backups, secrets audit, error handling.",
       "why": "Too early = hardening features that get rewritten. Too late = real users hit real holes. Right moment: after features work, before strangers arrive.",
-      "gate": "You tried to break it as an attacker and couldn't — and you could lose the database right now and recover."
+      "gate": "You tried to break it as an attacker and couldn't \u2014 and you could lose the database right now and recover.",
+      "checklist": [
+        "Tried to reach another user's data while logged in as someone else \u2014 failed",
+        "Secrets audit: no keys/passwords anywhere in git history",
+        "Backup exists AND a restore was actually tested",
+        "Bad input doesn't crash it \u2014 forms reject garbage safely",
+        "Errors are logged somewhere you'll actually look"
+      ]
     },
     {
       "key": "launch",
       "order": 6,
       "title": "Launch",
-      "plain": "One friendly human uses it for its real purpose — watch where they hesitate. Then open wider.",
+      "plain": "One friendly human uses it for its real purpose \u2014 watch where they hesitate. Then open wider.",
       "why": "Every assumption gets tested in the first 10 minutes of a real person clicking around. Better they're forgiving.",
-      "gate": "A real person completed the core action without your help — and nothing in Harden got skipped 'just for launch'."
+      "gate": "A real person completed the core action without your help \u2014 and nothing in Harden got skipped 'just for launch'.",
+      "checklist": [
+        "One named human used it for its real purpose",
+        "Watched or recorded where they hesitated",
+        "Fixed the top confusion points",
+        "Nothing from Harden was skipped 'just for launch'"
+      ]
     },
     {
       "key": "operate",
       "order": 7,
       "title": "Operate",
-      "plain": "The app tells you what's wrong before users do — health checks, logs, error alerts — then the loop repeats: define next slice → build → deploy → observe.",
+      "plain": "The app tells you what's wrong before users do \u2014 health checks, logs, error alerts \u2014 then the loop repeats: define next slice \u2192 build \u2192 deploy \u2192 observe.",
       "why": "Software is never finished, it's maintained. Winners notice problems fastest and fix them smallest.",
-      "gate": "Never ends — this stage IS the product."
+      "gate": "Never ends \u2014 this stage IS the product.",
+      "checklist": [
+        "Health/status check exists and you've looked at it",
+        "Errors land somewhere you check",
+        "Users have a feedback path (even an email link)",
+        "You've run the loop once: observe \u2192 next slice \u2192 deploy"
+      ]
     }
   ]
 }

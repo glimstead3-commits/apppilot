@@ -190,12 +190,28 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout }) {
 /* ---------- Project: stages + interview ---------- */
 
 function ProjectView({ project, stages, onBack, onSaved }) {
+  const exportLog = async () => {
+    const data = await api(`/api/projects/${project.id}/export`);
+    const blob = new Blob([data.markdown], { type: "text/markdown" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = data.filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   return (
     <div style={{ maxWidth: 720, margin: "48px auto", padding: "0 20px" }}>
       <button onClick={onBack} style={{ background: "none", border: "none", color: "#8a6d2b", cursor: "pointer", fontSize: 13, padding: 0, marginBottom: 12 }}>
         ← All projects
       </button>
-      <h1 style={{ fontSize: 26, marginBottom: 20 }}>{project.name}</h1>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 20 }}>
+        <h1 style={{ fontSize: 26 }}>{project.name}</h1>
+        <button onClick={exportLog}
+          style={{ ...btn, marginLeft: "auto", background: "#fff", color: "#17203a", border: "1px solid #cbd5e1", fontSize: 13 }}>
+          ⬇ Export build log
+        </button>
+      </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {stages.map((s) => (
           <StageCard key={s.key} stage={s} project={project} onSaved={onSaved} />
@@ -247,6 +263,15 @@ function StageCard({ stage, project, onSaved }) {
           <p style={{ fontSize: 14, color: "#334155", lineHeight: 1.5 }}>{stage.plain}</p>
           <p style={{ marginTop: 6, fontSize: 12, color: "#8a6d2b" }}><strong>Why:</strong> {stage.why}</p>
 
+          {stage.guided_steps?.length > 0 && (
+            <div style={{ marginTop: 12, background: "#f8fafc", borderRadius: 8, padding: "10px 14px" }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>How to do it:</p>
+              <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "#334155", lineHeight: 1.7 }}>
+                {stage.guided_steps.map((step, i) => <li key={i}>{step}</li>)}
+              </ol>
+            </div>
+          )}
+
           {stage.questions?.length > 0 && (
             <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
               {stage.questions.map((q) => (
@@ -259,12 +284,29 @@ function StageCard({ stage, project, onSaved }) {
                   />
                 </label>
               ))}
-              {err && <p style={{ color: "#b91c1c", fontSize: 13 }}>{err}</p>}
-              <div>
-                <button style={btn} onClick={save} disabled={busy}>
-                  {busy ? "Saving…" : done ? "Update answers" : "Save — pass this gate"}
-                </button>
-              </div>
+            </div>
+          )}
+
+          {stage.checklist?.length > 0 && (
+            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>Tick each when it's actually true:</p>
+              {stage.checklist.map((item, i) => (
+                <label key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, color: "#334155", cursor: "pointer" }}>
+                  <input type="checkbox" style={{ marginTop: 2 }}
+                    checked={answers[`check:${i}`] === true}
+                    onChange={(e) => setAnswers({ ...answers, [`check:${i}`]: e.target.checked })} />
+                  <span>{item}</span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {(stage.questions?.length > 0 || stage.checklist?.length > 0) && (
+            <div style={{ marginTop: 12 }}>
+              {err && <p style={{ color: "#b91c1c", fontSize: 13, marginBottom: 6 }}>{err}</p>}
+              <button style={btn} onClick={save} disabled={busy}>
+                {busy ? "Saving…" : done ? "Update" : "Save — pass this gate"}
+              </button>
             </div>
           )}
 
