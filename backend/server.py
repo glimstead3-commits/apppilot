@@ -47,6 +47,16 @@ def stages():
     return json.loads(path.read_text())["stages"]
 
 
+@app.get("/api/legal/{key}")
+def legal(key: str):
+    import json
+    docs = json.loads(
+        (Path(__file__).resolve().parent / "data" / "legal.json").read_text())
+    if key not in docs:
+        return JSONResponse({"detail": "Not found"}, status_code=404)
+    return docs[key]
+
+
 @app.get("/api/config")
 def config():
     """Public config the frontend needs before login — no secrets."""

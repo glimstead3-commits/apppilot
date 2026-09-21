@@ -35,11 +35,16 @@ export default function App() {
   const [stages, setStages] = useState([]);
   const [view, setView] = useState("loading"); // loading | auth | reset | home | project
   const [resetToken, setResetToken] = useState("");
+  const [legalDoc, setLegalDoc] = useState("");
   const [projects, setProjects] = useState([]);
   const [project, setProject] = useState(null);
 
   useEffect(() => {
     fetch("/api/stages").then((r) => r.json()).then(setStages).catch(() => {});
+    const path = window.location.pathname.replace(/^\//, "");
+    if (["privacy", "terms", "security"].includes(path)) {
+      setLegalDoc(path); setView("legal"); return;
+    }
     const reset = new URLSearchParams(window.location.search).get("reset");
     if (reset) { setResetToken(reset); setView("reset"); return; }
     const token = localStorage.getItem(TOKEN_KEY);
@@ -56,6 +61,7 @@ export default function App() {
     api(`/api/projects/${id}`).then((p) => { setProject(p); setView("project"); });
 
   if (view === "loading") return null;
+  if (view === "legal") return <LegalPage docKey={legalDoc} />;
   if (view === "auth") return <Auth onDone={(u) => { setUser(u); setView("home"); loadProjects(); }} />;
   if (view === "reset")
     return <ResetPassword token={resetToken} onDone={() => {
@@ -585,6 +591,34 @@ function ResetPassword({ token, onDone }) {
             </>
           )}
         </form>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Legal pages (/privacy /terms /security) ---------- */
+
+function LegalPage({ docKey }) {
+  const [doc, setDoc] = useState(null);
+  useEffect(() => {
+    fetch(`/api/legal/${docKey}`).then((r) => r.json()).then(setDoc).catch(() => {});
+  }, [docKey]);
+  if (!doc) return <div style={{ padding: 60, textAlign: "center", color: "#64748b" }}>Loading…</div>;
+  return (
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 20px" }}>
+      <a href="/" style={{ fontSize: 13, color: "#8a6d2b", textDecoration: "none" }}>← AppPilot</a>
+      <h1 style={{ fontSize: 28, margin: "16px 0 4px" }}>{doc.title}</h1>
+      <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 28 }}>Last updated: {doc.updated}</p>
+      {doc.sections.map((s, i) => (
+        <div key={i} style={{ marginBottom: 20 }}>
+          <h3 style={{ fontSize: 15, marginBottom: 6, color: "#17203a" }}>{s.h}</h3>
+          <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.65 }}>{s.body}</p>
+        </div>
+      ))}
+      <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid #e2e8f0", fontSize: 12, color: "#94a3b8" }}>
+        <a href="/privacy" style={{ color: "#8a6d2b", marginRight: 16 }}>Privacy</a>
+        <a href="/terms" style={{ color: "#8a6d2b", marginRight: 16 }}>Terms</a>
+        <a href="/security" style={{ color: "#8a6d2b" }}>Security</a>
       </div>
     </div>
   );
