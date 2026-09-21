@@ -58,7 +58,8 @@
 
 - The one action: **sign up → create a project → answer Stage 0 questions
   → see them saved**
-- [ ] Works end-to-end — date:
+- [x] Works end-to-end — verified locally + live (signup grants 50
+  credits via ledger; stage gating blocks later stages until answered)
 
 ## Stage 4 — Feature slices
 
