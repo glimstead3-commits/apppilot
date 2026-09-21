@@ -11,7 +11,9 @@ from utils.database import get_db
 
 _bearer = HTTPBearer(auto_error=False)
 
-SIGNUP_CREDITS = int(os.environ.get("SIGNUP_CREDITS", "50"))
+# Free-taste sizing: enough mentor chats to feel the value in stages 0-1,
+# not enough to never need to pay. Override via env without a redeploy.
+SIGNUP_CREDITS = int(os.environ.get("SIGNUP_CREDITS", "15"))
 
 
 def hash_password(password: str, salt: str) -> str:

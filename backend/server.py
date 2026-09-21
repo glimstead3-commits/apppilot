@@ -47,6 +47,13 @@ def stages():
     return json.loads(path.read_text())["stages"]
 
 
+@app.get("/api/config")
+def config():
+    """Public config the frontend needs before login — no secrets."""
+    from utils.auth import SIGNUP_CREDITS
+    return {"signup_credits": SIGNUP_CREDITS}
+
+
 @app.get("/api/health")
 def health():
     db = get_db()

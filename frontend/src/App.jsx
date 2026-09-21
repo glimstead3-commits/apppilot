@@ -96,6 +96,11 @@ function Auth({ onDone }) {
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [credits, setCredits] = useState(15);
+  useEffect(() => {
+    fetch("/api/config").then((r) => r.json())
+      .then((c) => setCredits(c.signup_credits ?? 15)).catch(() => {});
+  }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -193,7 +198,7 @@ function Auth({ onDone }) {
             </button>
           </div>
           {mode !== "forgot" && (
-            <div className="auth-free"><b>50 free credits</b> included · no card required</div>
+            <div className="auth-free"><b>{credits} free credits</b> · stages 1–2 free · no card required</div>
           )}
         </form>
       </div>
