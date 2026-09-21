@@ -640,8 +640,16 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
               </p>
             </div>
           ) : (<>
+          <MentorChat projectId={project.id} stageKey={stage.key}
+            hasQuestions={(stage.questions || []).length > 0}
+            onSpent={onSpent}
+            onDraft={(a) => setAnswers((prev) => ({ ...prev, ...a }))} />
+
           {steps.length > 0 && (
-            <div style={{ marginTop: 16 }}>
+            <div style={{ marginTop: 18 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#3730a3", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
+                Step 2 · Your answers
+              </p>
               {/* step progress */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".08em" }}>
@@ -727,11 +735,6 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
           <p style={{ marginTop: 10, fontSize: 12, color: "#64748b", fontStyle: "italic" }}>
             Gate: {stage.gate}
           </p>
-
-          <MentorChat projectId={project.id} stageKey={stage.key}
-            hasQuestions={(stage.questions || []).length > 0}
-            onSpent={onSpent}
-            onDraft={(a) => setAnswers((prev) => ({ ...prev, ...a }))} />
           </>)}
         </div>
       )}
@@ -742,7 +745,7 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
 /* ---------- Mentor chat ---------- */
 
 function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -752,6 +755,8 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
   const load = () =>
     api(`/api/projects/${projectId}/stages/${stageKey}/mentor`)
       .then((d) => setMsgs(d.messages)).catch(() => {});
+
+  useEffect(() => { load(); }, [stageKey]);
 
   const send = async () => {
     const message = text.trim();
@@ -772,18 +777,26 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
   };
 
   return (
-    <div style={{ marginTop: 12, borderTop: "1px solid #f1f5f9", paddingTop: 10 }}>
-      {!open ? (
-        <button onClick={() => { setOpen(true); load(); }}
-          style={{ background: "none", border: "none", color: "#8a6d2b", fontSize: 13, fontWeight: 600, cursor: "pointer", padding: 0 }}>
-          💬 Ask the mentor about this stage
+    <div style={{ marginTop: 14, background: "#fafbff", border: "1px solid #dbe4f5", borderRadius: 10, padding: "14px 16px" }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: open ? 10 : 0 }}>
+        <p style={{ fontSize: 12, fontWeight: 700, color: "#3730a3", textTransform: "uppercase", letterSpacing: ".08em" }}>
+          Step 1 · Chat it through with the mentor
+        </p>
+        <button onClick={() => setOpen(!open)}
+          style={{ marginLeft: "auto", background: "none", border: "none", color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>
+          {open ? "hide" : "show"}
         </button>
-      ) : (
+      </div>
+      {!open ? null : (
         <div>
+          <p style={{ fontSize: 12.5, color: "#64748b", marginBottom: 10, lineHeight: 1.5 }}>
+            Easiest way to do this stage: just tell the mentor about your idea in plain words.
+            It'll ask the right questions — then it can fill in the answers below for you.
+          </p>
           <div style={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
             {msgs.length === 0 && (
               <p style={{ fontSize: 12, color: "#94a3b8" }}>
-                Stuck? Ask anything — e.g. "I don't understand what a database is" or "what do I ask my AI tool to build next?"
+                Start by describing your idea in a sentence or two — like telling a friend. The mentor will take it from there.
               </p>
             )}
             {msgs.map((m, i) => (
@@ -801,7 +814,7 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
           </div>
           {msgs.length === 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-              {["Explain this stage in one line", "What should I ask my AI builder first?", "Help me answer the questions below"].map((s) => (
+              {["Here's my app idea: ", "I'm not sure where to start", "Help me answer the questions below"].map((s) => (
                 <button key={s}
                   onClick={() => { setText(s); }}
                   style={{ fontSize: 12, background: "#eef2ff", color: "#3730a3", border: "1px solid #c7d2fe", borderRadius: 999, padding: "4px 10px", cursor: "pointer" }}>
@@ -812,7 +825,7 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
           )}
           {err && <p style={{ color: "#b91c1c", fontSize: 12, marginBottom: 6 }}>{err}</p>}
           <div style={{ display: "flex", gap: 8 }}>
-            <input style={{ ...input, marginTop: 0, flex: 1 }} placeholder="Ask the mentor… (1 credit)"
+            <input style={{ ...input, marginTop: 0, flex: 1 }} placeholder="Tell the mentor about your idea… (1 credit)"
               value={text} onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send()} />
             <button style={{ ...btn, padding: "8px 14px", fontSize: 13 }} onClick={send} disabled={busy || !text.trim()}>Send</button>
