@@ -72,6 +72,13 @@
           "explain": "Just the nouns! Then say who owns what: 'a user has many projects'. 5–10 things is plenty — or ask the mentor to draft it.",
           "example": "'User → many Projects. Project → Stages + saved answers. User → Credit transactions.'",
           "starter": "Things: ___.  Who owns what: a ___ has many ___"
+        },
+        {
+          "key": "builder_stack",
+          "ask": "What did your AI builder choose to build it with — and did you ask it why?",
+          "explain": "You don't pick the tech — your builder does. But asking 'why that?' is how you catch a bad choice early. A good answer sounds boring: popular, well-documented, cheap to host.",
+          "example": "'React + FastAPI + MongoDB on Render — boring on purpose: common, cheap, and easy to get help with.'",
+          "starter": "It chose ___ — when I asked why, it said ___"
         }
       ],
       "gate": "Every decision is written down WITH its reasoning — and the 'if wrong, how bad?' answers are all small.",
