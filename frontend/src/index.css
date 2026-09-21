@@ -210,10 +210,23 @@ body {
 .stage-panel.solo { padding: 24px 28px; }
 
 .mobile-top { display: none; }
+.stage-strip { display: none; }
 
 @media (max-width: 820px) {
   .side { display: none; }
   .main { padding: 20px; }
+  .stage-strip {
+    display: flex; gap: 6px; overflow-x: auto; margin-bottom: 16px;
+    padding-bottom: 4px; -webkit-overflow-scrolling: touch;
+  }
+  .stage-strip .chip {
+    flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 999px;
+    border: 1px solid #e5eaf2; background: #fff; color: #475569; cursor: pointer;
+  }
+  .stage-strip .chip.on { background: #17203a; color: #fff; border-color: #17203a; }
+  .stage-strip .chip.done { border-color: #bbf7d0; color: #15803d; }
+  .stage-strip .chip.locked { opacity: .5; }
   .mobile-top {
     display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
     font-weight: 800; font-size: 15px;

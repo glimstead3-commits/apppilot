@@ -517,6 +517,20 @@ function ProjectView({ project, stages, activeStage, onSelectStage, onSaved }) {
         </div>
       </div>
 
+      <div className="stage-strip">
+        {stages.map((s) => {
+          const done = project.stages?.[s.key]?.completed;
+          const unlocked = s.order <= project.current_stage;
+          return (
+            <button key={s.key}
+              className={`chip ${s.key === activeStage ? "on" : ""} ${done ? "done" : ""} ${unlocked ? "" : "locked"}`}
+              onClick={() => onSelectStage(s.key)}>
+              {done ? "✓" : s.order + 1} {s.title}
+            </button>
+          );
+        })}
+      </div>
+
       {stage && (
         <StageCard key={stage.key} stage={stage} project={project} solo
           onSaved={(p) => {
