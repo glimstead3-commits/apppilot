@@ -55,7 +55,13 @@ def health():
             db_ok = True
         except Exception:
             db_ok = False
-    return {"ok": True, "service": "apppilot", "db": "connected" if db_ok else "not_configured"}
+    return {
+        "ok": True,
+        "service": "apppilot",
+        "db": "connected" if db_ok else "not_configured",
+        # Render injects RENDER_GIT_COMMIT — lets us confirm which commit is live.
+        "commit": os.environ.get("RENDER_GIT_COMMIT", "local")[:7],
+    }
 
 
 # --- Static frontend (built by `npx vite build` in frontend/) ---
