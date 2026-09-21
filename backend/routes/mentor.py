@@ -4,7 +4,7 @@ Spends 1 credit per message via the credit ledger. When no AI_API_KEY is
 configured the mentor falls back to the stage's static guidance so the app
 still works offline/free.
 
-Env vars: AI_PROVIDER ("anthropic"|"openai", default anthropic),
+Env vars: AI_PROVIDER ("anthropic"|"openai"|"gemini", default anthropic),
 AI_API_KEY, AI_MODEL (optional per provider).
 """
 import os
@@ -44,6 +44,11 @@ PROVIDERS = {
     "openai": {
         "url": "https://api.openai.com/v1/chat/completions",
         "model": os.environ.get("AI_MODEL", "gpt-4o-mini"),
+    },
+    # Free tier available at aistudio.google.com — good for v1 validation.
+    "gemini": {
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+        "model": os.environ.get("AI_MODEL", "gemini-2.0-flash"),
     },
 }
 
@@ -95,6 +100,21 @@ def _call_ai(system: str, history: list) -> str:
     key = os.environ.get("AI_API_KEY", "")
     if not cfg or not key:
         return ""
+    if provider == "gemini":
+        url = cfg["url"].format(model=cfg["model"])
+        r = requests.post(url, timeout=30,
+                          headers={"x-goog-api-key": key, "content-type": "application/json"},
+                          json={
+                              "system_instruction": {"parts": [{"text": system}]},
+                              "contents": [
+                                  {"role": "user" if h["role"] == "user" else "model",
+                                   "parts": [{"text": h["content"]}]}
+                                  for h in history
+                              ],
+                              "generationConfig": {"maxOutputTokens": 400},
+                          })
+        r.raise_for_status()
+        return r.json()["candidates"][0]["content"]["parts"][0]["text"]
     if provider == "anthropic":
         r = requests.post(cfg["url"], timeout=30, headers={
             "x-api-key": key,
