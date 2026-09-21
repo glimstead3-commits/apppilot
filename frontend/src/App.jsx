@@ -39,6 +39,8 @@ export default function App() {
   const [legalDoc, setLegalDoc] = useState("");
   const [projects, setProjects] = useState([]);
   const [project, setProject] = useState(null);
+  const [activeStage, setActiveStage] = useState(null);
+  const [fb, setFb] = useState({ open: false, seed: "" });
 
   useEffect(() => {
     fetch("/api/stages").then((r) => r.json()).then(setStages).catch(() => {});
@@ -68,44 +70,179 @@ export default function App() {
     api("/api/projects").then(setProjects).catch(() => {});
 
   const openProject = (id) =>
-    api(`/api/projects/${id}`).then((p) => { setProject(p); setView("project"); });
+    api(`/api/projects/${id}`).then((p) => {
+      setProject(p);
+      const cur = stages.find((s) => s.order === p.current_stage) || stages[stages.length - 1];
+      setActiveStage(cur?.key);
+      setView("project");
+    });
 
-  if (view === "loading") return null;
+  const logout = async () => {
+    try { await api("/api/auth/logout", { method: "POST", body: "{}" }); } catch {}
+    localStorage.removeItem(TOKEN_KEY); setUser(null); setProject(null); setView("auth");
+  };
+
+  const openFeedback = (seed = "") => setFb({ open: true, seed });
+  const goHome = () => { setProject(null); setView("home"); loadProjects(); };
+
+  const shell = (children) => (
+    <Shell user={user} stages={stages}
+      project={view === "project" ? project : null}
+      activeStage={activeStage} onSelectStage={setActiveStage}
+      onHome={goHome} onLogout={logout}
+      fb={{ open: fb.open, seed: fb.seed, show: openFeedback, close: () => setFb({ open: false, seed: "" }) }}>
+      {children}
+    </Shell>
+  );
+
+  if (view === "loading" || view === "admin_pending") return null;
   if (view === "legal") return <LegalPage docKey={legalDoc} />;
-  if (view === "guides") return <GuidesPage />;
   if (view === "verify")
     return <VerifyEmail token={verifyToken} onDone={() => {
       window.history.replaceState({}, "", "/"); setVerifyToken(""); setView("auth");
     }} />;
-  if (view === "admin" && user?.is_admin) return <AdminPage />;
-  if (view === "auth") return <Auth onDone={(u) => { setUser(u); setView("home"); loadProjects(); }} />;
   if (view === "reset")
     return <ResetPassword token={resetToken} onDone={() => {
       window.history.replaceState({}, "", "/");
       setResetToken(""); setView("auth");
     }} />;
+  if (view === "auth") return <Auth onDone={(u) => { setUser(u); setView("home"); loadProjects(); }} />;
+  if (view === "guides") return user ? shell(<GuidesPage />) : <GuidesPage />;
+  if (view === "admin" && user?.is_admin) return shell(<AdminPage />);
   if (view === "project" && project)
-    return (
+    return shell(
       <ProjectView
         project={project}
         stages={stages}
-        onBack={() => { setProject(null); setView("home"); loadProjects(); }}
+        activeStage={activeStage}
+        onSelectStage={setActiveStage}
         onSaved={(p) => setProject(p)}
       />
     );
-  return (
+  return shell(
     <Home
       user={user}
       projects={projects}
       stages={stages}
       onOpen={openProject}
-      onCreated={(p) => { setProject(p); setView("project"); }}
+      onCreated={(p) => openProject(p.id)}
       onChanged={loadProjects}
-      onLogout={async () => {
-        try { await api("/api/auth/logout", { method: "POST", body: "{}" }); } catch {}
-        localStorage.removeItem(TOKEN_KEY); setUser(null); setView("auth");
-      }}
+      onUpgrade={() => openFeedback("Hi — I'd like to upgrade to the full journey")}
     />
+  );
+}
+
+/* ---------- Shell: sidebar frame for everything logged-in ---------- */
+
+function FeedbackBox({ seed, onClose }) {
+  const [text, setText] = useState(seed || "");
+  const [sent, setSent] = useState(false);
+  const send = async () => {
+    await api("/api/feedback", { method: "POST", body: JSON.stringify({ message: text }) }).catch(() => {});
+    setSent(true);
+  };
+  return (
+    <div style={{ ...card, marginBottom: 18, background: "#f8fafc", maxWidth: 880 }}>
+      <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>What's confusing, broken, or missing?</p>
+      <textarea style={{ ...input, minHeight: 70, resize: "vertical", background: "#fff" }} value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Tell us — this is how the product gets better" />
+      <div style={{ display: "flex", gap: 10, marginTop: 8, alignItems: "center" }}>
+        {sent
+          ? <p style={{ fontSize: 12, color: "#15803d" }}>Thanks — sent ✓</p>
+          : <button style={{ ...btn, padding: "7px 14px", fontSize: 13 }} onClick={send} disabled={!text.trim()}>Send feedback</button>}
+        <button onClick={onClose} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>close</button>
+      </div>
+    </div>
+  );
+}
+
+function Shell({ user, project, stages, activeStage, onSelectStage, onHome, onLogout, fb, children }) {
+  const deleteAccount = async () => {
+    const pw = window.prompt("Delete your account and ALL projects permanently? Type your password to confirm:");
+    if (!pw) return;
+    try {
+      await api("/api/auth/account", { method: "DELETE", body: JSON.stringify({ password: pw }) });
+      localStorage.removeItem(TOKEN_KEY);
+      window.location.href = "/";
+    } catch (e) { alert(e.message); }
+  };
+
+  const initials = (user.name || user.email || "?").slice(0, 2).toUpperCase();
+  const projLabel = project && (project.name.length > 20 ? project.name.slice(0, 20) + "…" : project.name);
+
+  return (
+    <div className="shell">
+      <aside className="side">
+        <div className="side-logo"><span className="side-logo-dot">A</span>AppPilot</div>
+
+        <div className="nav-label">Build</div>
+        <button className={`nav-item ${!project ? "on" : ""}`} onClick={onHome}>
+          <span className="ico">▦</span>Projects
+        </button>
+
+        {project && (
+          <>
+            <div className="nav-label" title={project.name}>Stages — {projLabel}</div>
+            {stages.map((s) => {
+              const done = project.stages?.[s.key]?.completed;
+              const unlocked = s.order <= project.current_stage;
+              return (
+                <button key={s.key}
+                  className={`stage-nav ${done ? "done" : unlocked ? "now" : "locked"} ${s.key === activeStage ? "on" : ""}`}
+                  onClick={() => onSelectStage(s.key)}>
+                  <span className="sdot">{done ? "✓" : s.order + 1}</span>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
+                </button>
+              );
+            })}
+          </>
+        )}
+
+        <div className="nav-label">Help</div>
+        <a className="nav-item" href="/guides"><span className="ico">?</span>Guides</a>
+        <button className="nav-item" onClick={() => fb.show()}><span className="ico">✉</span>Feedback</button>
+
+        {user.is_admin && (
+          <>
+            <div className="nav-label">You</div>
+            <a className="nav-item" href="/admin"><span className="ico">⚙</span>Admin</a>
+          </>
+        )}
+
+        <div className="side-cred">
+          {user.credits_balance} credits
+          <small>{user.plan} plan{user.plan === "free" ? " · stages 1–2 unlocked" : ""}</small>
+        </div>
+        <div className="side-user">
+          <span className="avatar">{initials}</span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || user.email}</div>
+            <button onClick={onLogout} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 11, cursor: "pointer", padding: 0 }}>Log out</button>
+          </div>
+        </div>
+        <div className="side-legal">
+          <a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/security">Security</a>
+          <button onClick={deleteAccount} style={{ background: "none", border: "none", color: "#dc2626", fontSize: 11, cursor: "pointer", padding: 0, marginLeft: "auto" }}>Delete</button>
+        </div>
+      </aside>
+
+      <main className="main">
+        <div className="mobile-top">
+          <span className="side-logo-dot" style={{ width: 24, height: 24, fontSize: 12 }}>A</span>
+          {project
+            ? <button onClick={onHome} style={{ background: "none", border: "none", color: "#8a6d2b", fontSize: 13, cursor: "pointer" }}>← Projects</button>
+            : <span>AppPilot</span>}
+          <span className="right">
+            <a href="/guides" style={{ color: "#8a6d2b", textDecoration: "none" }}>Guides</a>
+            <span style={{ color: "#8a6d2b", fontWeight: 700 }}>{user.credits_balance} cr</span>
+            <button onClick={onLogout} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>Log out</button>
+          </span>
+        </div>
+        {fb.open && <FeedbackBox key={fb.seed} seed={fb.seed} onClose={fb.close} />}
+        <div className="main-inner">{children}</div>
+      </main>
+    </div>
   );
 }
 
@@ -243,28 +380,10 @@ function Auth({ onDone }) {
 
 /* ---------- Home: projects ---------- */
 
-function Home({ user, projects, stages, onOpen, onCreated, onLogout, onChanged }) {
+function Home({ user, projects, stages, onOpen, onCreated, onChanged, onUpgrade }) {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackText, setFeedbackText] = useState("");
-  const [feedbackSent, setFeedbackSent] = useState(false);
   const [resent, setResent] = useState(false);
-
-  const sendFeedback = async () => {
-    await api("/api/feedback", { method: "POST", body: JSON.stringify({ message: feedbackText }) }).catch(() => {});
-    setFeedbackSent(true); setFeedbackText("");
-  };
-
-  const deleteAccount = async () => {
-    const pw = window.prompt("Delete your account and ALL projects permanently? Type your password to confirm:");
-    if (!pw) return;
-    try {
-      await api("/api/auth/account", { method: "DELETE", body: JSON.stringify({ password: pw }) });
-      localStorage.removeItem(TOKEN_KEY);
-      window.location.href = "/";
-    } catch (e) { alert(e.message); }
-  };
 
   const create = async (e) => {
     e.preventDefault();
@@ -276,21 +395,20 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout, onChanged }
     } finally { setBusy(false); }
   };
 
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const first = (user.name || "").split(" ")[0] || "there";
+  const inProgress = projects.filter((p) => (p.current_stage ?? 0) < stages.length).length;
+
   return (
-    <div style={{ maxWidth: 720, margin: "48px auto", padding: "0 20px" }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 24 }}>
+    <>
+      <div className="main-top">
         <div>
-          <p style={{ fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", color: "#8a6d2b", fontWeight: 700 }}>AppPilot</p>
-          <h1 style={{ fontSize: 26 }}>Your projects</h1>
-        </div>
-        <div style={{ marginLeft: "auto", textAlign: "right", fontSize: 13, color: "#64748b" }}>
-          <div>{user.name || user.email}</div>
-          <div>{user.credits_balance} credits · {user.plan} plan</div>
-          <div>
-            {user.is_admin && <a href="/admin" style={{ color: "#8a6d2b", fontSize: 12, textDecoration: "none", marginRight: 12 }}>Admin</a>}
-            <a href="/guides" style={{ color: "#8a6d2b", fontSize: 12, textDecoration: "none", marginRight: 12 }}>Guides</a>
-            <button onClick={() => setFeedbackOpen(!feedbackOpen)} style={{ background: "none", border: "none", color: "#8a6d2b", cursor: "pointer", fontSize: 12, padding: 0, marginRight: 12 }}>Feedback</button>
-            <button onClick={onLogout} style={{ background: "none", border: "none", color: "#8a6d2b", cursor: "pointer", fontSize: 12, padding: 0 }}>Log out</button>
+          <h1>{greet}, {first}</h1>
+          <div className="sub">
+            {projects.length === 0
+              ? "Start your first build below"
+              : `${inProgress} build${inProgress === 1 ? "" : "s"} in progress`}
           </div>
         </div>
       </div>
@@ -306,42 +424,44 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout, onChanged }
         </div>
       )}
 
-      {feedbackOpen && (
-        <div style={{ ...card, marginBottom: 16, background: "#f8fafc" }}>
-          <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>What's confusing, broken, or missing?</p>
-          <textarea style={{ ...input, minHeight: 70, resize: "vertical" }} value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-            placeholder="Tell us — this is how the product gets better" />
-          {feedbackSent
-            ? <p style={{ fontSize: 12, color: "#15803d", marginTop: 6 }}>Thanks — sent ✓</p>
-            : <button style={{ ...btn, marginTop: 8, padding: "7px 14px", fontSize: 13 }} onClick={sendFeedback} disabled={!feedbackText.trim()}>Send feedback</button>}
+      {user.plan === "free" && (
+        <div className="banner-upgrade">
+          <div>
+            <b>Unlock the full journey</b>
+            <p>Stages 3–8 — Foundation to Launch — plus unlimited mentor.</p>
+          </div>
+          <button onClick={onUpgrade}>Upgrade</button>
         </div>
       )}
 
-      <form onSubmit={create} style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+      <form onSubmit={create} style={{ display: "flex", gap: 10, marginBottom: 26 }}>
         <input style={{ ...input, marginTop: 0, flex: 1 }} placeholder="New app idea — e.g. 'Dog walking tracker'"
           value={name} onChange={(e) => setName(e.target.value)} />
-        <button style={btn} disabled={busy || !name.trim()}>Start</button>
+        <button className="newbtn" disabled={busy || !name.trim()}>{busy ? "…" : "Start build →"}</button>
       </form>
 
       {projects.length === 0 ? (
         <p style={{ color: "#64748b", fontSize: 14 }}>No projects yet — name your first app idea above.</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {projects.map((p) => (
-            <button key={p.id} onClick={() => onOpen(p.id)}
-              style={{ ...card, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700 }}>{p.name}</div>
-                <div style={{ fontSize: 12, color: "#64748b" }}>
-                  {(p.current_stage ?? 0) >= stages.length
+        projects.map((p) => {
+          const done = (p.current_stage ?? 0) >= stages.length;
+          return (
+            <button key={p.id} className="proj-row" onClick={() => onOpen(p.id)}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="nm">{p.name}</div>
+                <div className="st">
+                  {done
                     ? "All stages complete 🎉"
                     : `Stage ${(p.current_stage ?? 0) + 1} of ${stages.length} — ${stages[p.current_stage]?.title || ""}`}
                 </div>
-                <div style={{ height: 4, background: "#e2e8f0", borderRadius: 2, marginTop: 6 }}>
-                  <div style={{ height: 4, borderRadius: 2, background: "#2563eb", width: `${Math.round(((p.current_stage ?? 0) / stages.length) * 100)}%` }} />
+                <div className="segs">
+                  {stages.map((s) => (
+                    <span key={s.key}
+                      className={`seg ${s.order < (p.current_stage ?? 0) ? "done" : s.order === (p.current_stage ?? 0) ? "now" : ""}`} />
+                  ))}
                 </div>
               </div>
+              <span className={`pill ${done ? "green" : "gold"}`}>{done ? "LAUNCHED" : "IN PROGRESS"}</span>
               <span
                 onClick={async (e) => {
                   e.stopPropagation();
@@ -351,29 +471,18 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout, onChanged }
                   }
                 }}
                 style={{ color: "#cbd5e1", fontSize: 16, padding: "0 4px" }} title="Delete project">✕</span>
-              <span style={{ color: "#94a3b8" }}>›</span>
+              <span className="go">›</span>
             </button>
-          ))}
-        </div>
+          );
+        })
       )}
-
-      <div style={{ marginTop: 48, paddingTop: 16, borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", fontSize: 12, color: "#94a3b8" }}>
-        <span>
-          <a href="/privacy" style={{ color: "#94a3b8", marginRight: 12 }}>Privacy</a>
-          <a href="/terms" style={{ color: "#94a3b8", marginRight: 12 }}>Terms</a>
-          <a href="/security" style={{ color: "#94a3b8" }}>Security</a>
-        </span>
-        <button onClick={deleteAccount} style={{ background: "none", border: "none", color: "#dc2626", fontSize: 12, cursor: "pointer", padding: 0 }}>
-          Delete account
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 
 /* ---------- Project: stages + interview ---------- */
 
-function ProjectView({ project, stages, onBack, onSaved }) {
+function ProjectView({ project, stages, activeStage, onSelectStage, onSaved }) {
   const [me, setMe] = useState(null);
   const refreshMe = () => api("/api/auth/me").then(setMe).catch(() => {});
   useEffect(() => { refreshMe(); }, []);
@@ -388,37 +497,44 @@ function ProjectView({ project, stages, onBack, onSaved }) {
     URL.revokeObjectURL(a.href);
   };
 
+  const stage = stages.find((s) => s.key === activeStage)
+    || stages.find((s) => s.order === project.current_stage)
+    || stages[0];
+
   return (
-    <div style={{ maxWidth: 720, margin: "48px auto", padding: "0 20px" }}>
-      <button onClick={onBack} style={{ background: "none", border: "none", color: "#8a6d2b", cursor: "pointer", fontSize: 13, padding: 0, marginBottom: 12 }}>
-        ← All projects
-      </button>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: 20 }}>
-        <h1 style={{ fontSize: 26 }}>{project.name}</h1>
-        {me && (
-          <span style={{ marginLeft: "auto", marginRight: 10, fontSize: 12, color: "#8a6d2b", fontWeight: 700, background: "#fdf6e3", border: "1px solid #e8d48b", borderRadius: 999, padding: "4px 10px" }}>
-            {me.credits_balance} credits
-          </span>
-        )}
-        <button onClick={exportLog}
-          style={{ ...btn, marginLeft: "auto", background: "#fff", color: "#17203a", border: "1px solid #cbd5e1", fontSize: 13 }}>
-          ⬇ Export build log
-        </button>
+    <>
+      <div className="main-top">
+        <div>
+          <h1>{project.name}</h1>
+          {stage && <div className="sub">Stage {stage.order + 1} of {stages.length} — {stage.title}</div>}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {me && <span className="pill gold" style={{ marginLeft: 0 }}>{me.credits_balance} credits</span>}
+          <button onClick={exportLog}
+            className="newbtn" style={{ background: "#fff", color: "#17203a", border: "1px solid #cbd5e1" }}>
+            ⬇ Build log
+          </button>
+        </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {stages.map((s) => (
-          <StageCard key={s.key} stage={s} project={project} onSaved={onSaved} onSpent={refreshMe}
-            planLocked={(me?.plan ?? "free") === "free" && s.order >= 2} />
-        ))}
-      </div>
-    </div>
+
+      {stage && (
+        <StageCard key={stage.key} stage={stage} project={project} solo
+          onSaved={(p) => {
+            onSaved(p);
+            const next = stages.find((s) => s.order === stage.order + 1);
+            if (p.stages?.[stage.key]?.completed && next) onSelectStage(next.key);
+          }}
+          onSpent={refreshMe}
+          planLocked={(me?.plan ?? "free") === "free" && stage.order >= 2} />
+      )}
+    </>
   );
 }
 
-function StageCard({ stage, project, onSaved, onSpent, planLocked }) {
+function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
   const done = project.stages?.[stage.key]?.completed;
   const unlocked = stage.order <= project.current_stage;
-  const [open, setOpen] = useState(stage.order === project.current_stage);
+  const [open, setOpen] = useState(solo || stage.order === project.current_stage);
   const [answers, setAnswers] = useState(project.stages?.[stage.key]?.answers || {});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -437,18 +553,19 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked }) {
   };
 
   return (
-    <div style={{ ...card, opacity: unlocked ? 1 : 0.55 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}
-        onClick={() => unlocked && setOpen(!open)}>
+    <div className={solo ? "stage-panel solo" : "stage-panel"}
+      style={{ opacity: unlocked ? 1 : 0.55 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: solo ? "default" : "pointer" }}
+        onClick={() => !solo && unlocked && setOpen(!open)}>
         <span style={{
           width: 26, height: 26, borderRadius: "50%", fontSize: 12, fontWeight: 700, flexShrink: 0,
           display: "flex", alignItems: "center", justifyContent: "center",
           background: done ? "#16a34a" : unlocked ? "#c9a227" : "#eef1f6",
           color: done || unlocked ? "#fff" : "#64748b",
         }}>{done ? "✓" : stage.order}</span>
-        <span style={{ fontWeight: 700 }}>Stage {stage.order} — {stage.title}</span>
+        <span style={{ fontWeight: 700 }}>Stage {stage.order + 1} — {stage.title}</span>
         <span style={{ marginLeft: "auto", fontSize: 11, color: "#94a3b8" }}>
-          {done ? "passed" : unlocked ? (open ? "tap to close" : "tap to open") : "locked"}
+          {done ? "passed" : unlocked ? (solo ? "" : open ? "tap to close" : "tap to open") : "locked"}
         </span>
       </div>
 
@@ -463,6 +580,17 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked }) {
               <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "#334155", lineHeight: 1.7 }}>
                 {stage.guided_steps.map((step, i) => <li key={i}>{step}</li>)}
               </ol>
+            </div>
+          )}
+
+          {stage.traps?.length > 0 && (
+            <div style={{ marginTop: 12, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px" }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>⚠ Traps novices hit here:</p>
+              {stage.traps.map((t, i) => (
+                <p key={i} style={{ fontSize: 12, color: "#92400e", lineHeight: 1.55, marginBottom: 6 }}>
+                  <strong>{t.trap}.</strong> {t.story}
+                </p>
+              ))}
             </div>
           )}
 

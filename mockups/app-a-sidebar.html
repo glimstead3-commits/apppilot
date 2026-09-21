@@ -1,0 +1,63 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Mockup A — Sidebar shell</title>
+<style>
+*{box-sizing:border-box;margin:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+body{display:flex;min-height:100vh;background:#f4f6fa;color:#17203a}
+.side{width:236px;background:#fff;border-right:1px solid #e5eaf2;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:20px 14px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;padding:4px 8px 22px}
+.logo-dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#f4c95d,#e0a71f);display:flex;align-items:center;justify-content:center;color:#17203a;font-size:15px}
+.nav-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;padding:14px 10px 6px}
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:#334155;text-decoration:none;font-size:14px;font-weight:500;margin-bottom:2px}
+.nav a.on{background:#f1f5fb;color:#17203a;font-weight:700}
+.nav a:hover{background:#f8fafc}
+.nav .ico{width:18px;text-align:center}
+.cred{margin-top:auto;background:#fdf6e3;border:1px solid #e8d48b;border-radius:10px;padding:12px;font-size:12px;color:#8a6d2b;font-weight:700}
+.cred small{display:block;color:#a08c4a;font-weight:500;margin-top:2px}
+.user{margin-top:12px;display:flex;align-items:center;gap:10px;padding:8px;font-size:13px}
+.avatar{width:32px;height:32px;border-radius:50%;background:#17203a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.main{flex:1;padding:36px 44px;max-width:calc(100% - 236px)}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+h1{font-size:24px}
+.sub{color:#64748b;font-size:14px;margin-top:3px}
+.newbtn{background:#17203a;color:#fff;border:none;border-radius:9px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer}
+.proj{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:20px 22px;margin-bottom:14px;display:flex;align-items:center;gap:20px;box-shadow:0 1px 3px rgba(23,32,58,.05)}
+.proj:hover{box-shadow:0 8px 24px rgba(23,32,58,.09);border-color:#d5dcea}
+.proj .nm{font-weight:700;font-size:16px}
+.proj .st{font-size:12.5px;color:#64748b;margin-top:4px}
+.segs{display:flex;gap:4px;margin-top:10px}
+.seg{width:26px;height:5px;border-radius:3px;background:#e2e8f0}
+.seg.done{background:#16a34a}.seg.now{background:#f4c95d}
+.proj .go{margin-left:auto;color:#94a3b8;font-size:20px}
+.pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px}
+.pill.gold{background:#fdf6e3;color:#8a6d2b;border:1px solid #e8d48b}
+.pill.green{background:#e8f7ee;color:#15803d}
+.banner{background:linear-gradient(90deg,#17203a,#24304f);color:#fff;border-radius:14px;padding:18px 22px;margin-bottom:24px;display:flex;align-items:center;gap:16px}
+.banner b{font-size:15px}.banner p{color:#b8c2d8;font-size:13px;margin-top:2px}
+.banner button{margin-left:auto;background:#f4c95d;color:#17203a;border:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer}
+</style></head><body>
+<aside class="side">
+  <div class="logo"><span class="logo-dot">A</span>AppPilot</div>
+  <div class="nav">
+    <div class="nav-label">Build</div>
+    <a class="on" href="#"><span class="ico">▦</span>Projects</a>
+    <a href="#"><span class="ico">✦</span>Mentor</a>
+    <a href="#"><span class="ico">⤓</span>Build log</a>
+    <div class="nav-label">Help</div>
+    <a href="#"><span class="ico">?</span>Guides</a>
+    <a href="#"><span class="ico">✉</span>Feedback</a>
+    <div class="nav-label">You</div>
+    <a href="#"><span class="ico">⚙</span>Admin</a>
+  </div>
+  <div class="cred">14 credits<small>free plan · stages 1–2 unlocked</small></div>
+  <div class="user"><span class="avatar">SG</span><div><div style="font-weight:600">Stuart</div><div style="font-size:11px;color:#94a3b8">Log out</div></div></div>
+</aside>
+<main class="main">
+  <div class="topbar">
+    <div><h1>Good afternoon, Stuart</h1><div class="sub">2 builds in progress</div></div>
+    <button class="newbtn">+ New app idea</button>
+  </div>
+  <div class="banner"><div><b>Unlock the full journey</b><p>Stages 3–8 — Foundation to Launch — plus unlimited mentor.</p></div><button>Upgrade</button></div>
+  <div class="proj"><div><div class="nm">Dog walking tracker</div><div class="st">Stage 2 of 8 · Architect — the decisions that cost</div><div class="segs"><span class="seg done"></span><span class="seg now"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span></div></div><span class="pill gold">IN PROGRESS</span><span class="go">›</span></div>
+  <div class="proj"><div><div class="nm">Club kit order form</div><div class="st">Stage 1 of 8 · Define — what, who, what NOT</div><div class="segs"><span class="seg now"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span></div></div><span class="pill gold">IN PROGRESS</span><span class="go">›</span></div>
+  <div class="proj"><div><div class="nm">Sunday league fixtures</div><div class="st">All stages complete — launched 3 days ago</div><div class="segs"><span class="seg done"></span><span class="seg done"></span><span class="seg done"></span><span class="seg done"></span><span class="seg done"></span><span class="seg done"></span><span class="seg done"></span><span class="seg done"></span></div></div><span class="pill green">LAUNCHED</span><span class="go">›</span></div>
+</main>
+</body></html>
