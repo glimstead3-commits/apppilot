@@ -95,7 +95,8 @@ export default function App() {
     </Shell>
   );
 
-  if (view === "loading" || view === "admin_pending") return null;
+  if (view === "loading" || view === "admin_pending")
+    return <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 14 }}>Loading…</div>;
   if (view === "legal") return <LegalPage docKey={legalDoc} />;
   if (view === "verify")
     return <VerifyEmail token={verifyToken} onDone={() => {
