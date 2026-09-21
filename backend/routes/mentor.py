@@ -97,7 +97,8 @@ Rules:
 def _call_ai(system: str, history: list) -> str:
     provider = os.environ.get("AI_PROVIDER", "anthropic").lower()
     cfg = PROVIDERS.get(provider)
-    key = os.environ.get("AI_API_KEY", "")
+    # strip(): pasted keys often carry a trailing newline/space → bad header
+    key = os.environ.get("AI_API_KEY", "").strip()
     if not cfg or not key:
         return ""
     if provider == "gemini":
@@ -165,7 +166,7 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
         raise HTTPException(status_code=400, detail="Empty message")
 
     # --- Credit pre-check (spend happens only if the AI actually answers) ---
-    ai_on = bool(os.environ.get("AI_API_KEY"))
+    ai_on = bool(os.environ.get("AI_API_KEY", "").strip())
     if ai_on and (user.get("credits_balance") or 0) < MENTOR_COST:
         raise HTTPException(status_code=402,
                             detail="Out of credits — top up to keep chatting with the mentor")
@@ -240,7 +241,7 @@ def mentor_draft(project_id: str, stage_key: str, user=Depends(get_current_user)
     if not questions:
         raise HTTPException(status_code=400, detail="This stage has no questions to draft")
 
-    if not os.environ.get("AI_API_KEY"):
+    if not os.environ.get("AI_API_KEY", "").strip():
         raise HTTPException(status_code=503, detail="Mentor is not configured")
     if (user.get("credits_balance") or 0) < MENTOR_COST:
         raise HTTPException(status_code=402, detail="Out of credits")
@@ -293,4 +294,4 @@ def mentor_history(project_id: str, stage_key: str, user=Depends(get_current_use
         for m in db.mentor_messages.find({"project_id": oid, "stage_key": stage_key})
         .sort("created_at", 1)
     ]
-    return {"messages": msgs, "ai": bool(os.environ.get("AI_API_KEY"))}
+    return {"messages": msgs, "ai": bool(os.environ.get("AI_API_KEY", "").strip())}

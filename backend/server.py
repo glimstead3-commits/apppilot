@@ -65,7 +65,7 @@ def health():
         "commit": os.environ.get("RENDER_GIT_COMMIT", "local")[:7],
         # Shows whether the mentor is wired up — never exposes the key itself.
         "mentor": os.environ.get("AI_PROVIDER", "anthropic")
-                  if os.environ.get("AI_API_KEY") else "offline",
+                  if os.environ.get("AI_API_KEY", "").strip() else "offline",
     }
 
 
