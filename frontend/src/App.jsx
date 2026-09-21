@@ -684,6 +684,13 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
                     onChange={(e) => setAnswers({ ...answers, [step.key]: e.target.value })}
                     placeholder="Your answer — plain words are perfect…"
                   />
+                  {step.starter && !String(answers[step.key] || "").trim() && (
+                    <button
+                      onClick={() => setAnswers({ ...answers, [step.key]: step.starter })}
+                      style={{ marginTop: 6, background: "none", border: "1px dashed #cbd5e1", borderRadius: 8, padding: "6px 12px", fontSize: 12, color: "#64748b", cursor: "pointer" }}>
+                      📝 Start from a template — just fill the blanks
+                    </button>
+                  )}
                   {err
                     ? <p style={{ fontSize: 13, color: "#b45309", marginTop: 8 }}>{err}</p>
                     : <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>

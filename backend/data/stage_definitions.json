@@ -9,33 +9,24 @@
       "questions": [
         {
           "key": "one_sentence",
-          "ask": "In one sentence — what does your app do? Fill in: 'This app lets ___ do ___'",
-          "explain": "Don't overthink it — write it like you'd tell a friend in the pub. If it needs more than one sentence, the idea isn't clear yet.",
-          "example": "'This app lets dog walkers record walks and bill owners without chasing WhatsApp messages.'"
+          "ask": "So — what's the idea? Tell me like you're texting a mate.",
+          "explain": "One breath, no tech words. If it takes two sentences, split the idea — you're probably building two apps.",
+          "example": "'It's for dog walkers — they log each walk and the app bills the owners automatically.'",
+          "starter": "It's for ___ — it lets them ___ without ___"
         },
         {
           "key": "first_user",
-          "ask": "Who is ONE real person who would use this first? Give them a name, or describe them.",
-          "explain": "Not 'everyone' — one actual human you could show it to. Every good app started by solving one real person's problem.",
-          "example": "'Sarah — the dog walker on my street. About 15 clients, currently invoices by text at month-end.'"
+          "ask": "Picture one real person using this. Who are they — actually, what's their name?",
+          "explain": "A real human you could show it to — not 'everyone'. If you can't name them, describe someone you know.",
+          "example": "'Sarah — the dog walker on my street, ~15 clients, invoices by text.'",
+          "starter": "Someone like ___ who right now struggles with ___"
         },
         {
           "key": "must_do",
-          "ask": "If your app could only do 3 things on day one, what are they?",
-          "explain": "Only three! Imagine your first user opening it tomorrow — what would they absolutely need? Everything else is version 2.",
-          "example": "'1) Log a walk with photos. 2) Owner gets a summary after each walk. 3) Invoice generated automatically at month-end.'"
-        },
-        {
-          "key": "not_doing",
-          "ask": "What cool ideas are you saving for later? List them here instead of building them now.",
-          "explain": "This list isn't rejection — it's protection. Every 'wouldn't it be cool if…' goes here so version 1 actually gets finished.",
-          "example": "'Later: live GPS tracking, in-app chat, owner reviews, a marketplace of walkers.'"
-        },
-        {
-          "key": "launched_means",
-          "ask": "How will you know it's done? Describe the moment you'll say 'it works!'",
-          "explain": "Pick something you can actually see happen — a real person using it for real. 'When it feels ready' is a trap; it never feels ready.",
-          "example": "'When Sarah has used it for a full week of real walks and sent a real invoice to a real client.'"
+          "ask": "It can only do 3 things on day one — what are they?",
+          "explain": "Force the choice. If your first user opened it tomorrow, what three things would make them come back?",
+          "example": "'1) Log a walk with photos. 2) Owner gets a summary. 3) Invoice sent automatically.'",
+          "starter": "1) ___  2) ___  3) ___"
         }
       ],
       "gate": "You can explain the app to a stranger in 30 seconds, and the not-doing list makes you slightly uncomfortable.",
@@ -63,33 +54,24 @@
       "questions": [
         {
           "key": "data_isolation",
-          "ask": "Two strangers sign up. Should one ever be able to see the other's private stuff? What's the worst they could see?",
-          "explain": "Every app that stores people's data must answer this. The usual rule: everything gets tagged with its owner, and the app only ever shows you YOUR things.",
-          "example": "'Worst case: one walker sees another's client names and prices — bad. So every record gets tagged with its owner's ID.'"
-        },
-        {
-          "key": "config_location",
-          "ask": "What might you want to change later without rebuilding — like the app's name, or which email it sends from?",
-          "explain": "Things that change per computer or per customer get stored as 'settings' (environment variables or the database), never typed into the code. A short list is fine.",
-          "example": "'The database address, the sender email, the app name — all settings, so the same code runs everywhere.'"
+          "ask": "Two strangers both use your app. Should either of them ever see the other's stuff?",
+          "explain": "Answer 'no' and your builder must tag every record with its owner. If you're unsure, write what the worst leak would be.",
+          "example": "'No — worst case would be one walker seeing another's clients. Everything gets an owner tag.'",
+          "starter": "No — the worst would be someone seeing ___. To stop it: ___"
         },
         {
           "key": "secrets",
-          "ask": "Will your app need any keys or passwords to talk to other services (email, payments, AI)? List them.",
-          "explain": "These are your app's passwords. They get stored safely on the server as 'environment variables' — never written into the code, where anyone could steal them.",
-          "example": "'AI_API_KEY (the mentor), RESEND_API_KEY (email), MONGO_URL (database password). All in env vars, none in the repo.'"
-        },
-        {
-          "key": "external_deps",
-          "ask": "Will your app rely on other services — like sending emails or taking payments? What should it do if one is down?",
-          "explain": "Every outside service breaks sometimes. For each one, pick a backup plan — even if it's just 'show a friendly error and try again'.",
-          "example": "'Email down → tell the user to try later. AI down → the mentor shows the written stage guide for free.'"
+          "ask": "What does your app need passwords or keys for? (AI, email, payments — list anything.)",
+          "explain": "Just list them — your builder stores these as 'environment variables', never in the code.",
+          "example": "'AI key for the mentor, email key for sending, database password.'",
+          "starter": "Keys/passwords for: ___"
         },
         {
           "key": "data_model",
-          "ask": "List the main 'things' your app needs to remember — like users, orders, messages. Which ones belong to which?",
-          "explain": "Just the nouns! 'A user has many projects' — that's a data model. 5 to 10 things is plenty. Stuck? The mentor below can help you draft this.",
-          "example": "'User → has many Projects. Project → has Stages and saved answers. User → has Credit transactions.'"
+          "ask": "What does your app need to remember? List the 'things' — like users, bookings, messages.",
+          "explain": "Just the nouns! Then say who owns what: 'a user has many projects'. 5–10 things is plenty — or ask the mentor to draft it.",
+          "example": "'User → many Projects. Project → Stages + saved answers. User → Credit transactions.'",
+          "starter": "Things: ___.  Who owns what: a ___ has many ___"
         }
       ],
       "gate": "Every decision is written down WITH its reasoning — and the 'if wrong, how bad?' answers are all small.",
@@ -142,6 +124,22 @@
           "trap": "Manual deploy steps you have to remember",
           "story": "If deploying means 'run these 5 commands in the right order', you WILL eventually skip one and deploy a broken build. Auto-deploy-on-push means the pipeline can't be forgotten — the repo IS the deploy button."
         }
+      ],
+      "questions": [
+        {
+          "key": "config_location",
+          "ask": "What might you want to change later without rebuilding — app name, sender email, prices?",
+          "explain": "Those go in settings (env vars/database), never typed into code. Short list is fine.",
+          "example": "'App name, sender email, credit amounts — all settings.'",
+          "starter": "Might change later: ___"
+        },
+        {
+          "key": "external_deps",
+          "ask": "Does it rely on any outside services — email, payments, AI? What happens when one breaks?",
+          "explain": "Every outside service fails sometimes. For each, pick a plan B — even 'show a friendly error' counts.",
+          "example": "'Email down → tell user to retry. AI down → mentor shows the written guide.'",
+          "starter": "Relies on: ___. If it breaks: ___"
+        }
       ]
     },
     {
@@ -193,6 +191,15 @@
           "trap": "Unrelated fix sneaking into a change",
           "story": "While lightening the chat sidebar in the CRM, the global admin sidebar accidentally went light too — a CSS variable shared across pages. The fix: revert, scope the change tighter. Small commits make this a 2-minute undo instead of archaeology."
         }
+      ],
+      "questions": [
+        {
+          "key": "not_doing",
+          "ask": "What are the shiny ideas you're NOT building yet?",
+          "explain": "Writing them down here is how they stop sneaking into version 1. This list is what keeps you finishable.",
+          "example": "'Later: live GPS tracking, in-app chat, a marketplace of walkers.'",
+          "starter": "Not yet: ___, ___, ___"
+        }
       ]
     },
     {
@@ -216,27 +223,31 @@
       "questions": [
         {
           "key": "worst_leak",
-          "ask": "Imagine a stranger downloaded your whole database tonight. What would they find? Anything scary?",
-          "explain": "This tells you what to protect hardest — and sometimes what to stop storing. You can't leak what you never kept.",
-          "example": "'Emails + scrambled passwords — embarrassing but OK. No card numbers (Stripe keeps those), no kids' addresses.'"
+          "ask": "If a stranger got your whole database tonight, what would they find? What's the scariest thing in it?",
+          "explain": "This decides what to protect hardest — and what to stop storing. You can't leak what you never kept.",
+          "example": "'Emails + scrambled passwords — embarrassing, not fatal. No card numbers, no kids' addresses.'",
+          "starter": "They'd find: ___. Scariest: ___"
         },
         {
           "key": "attacker_profile",
-          "ask": "Who might actually try to break or cheat your app — bored kids, or someone wanting paid features for free?",
-          "explain": "You're probably not a target for elite hackers. The realistic threats: automated bots probing every website, and people gaming your free tier.",
-          "example": "'Most likely: bots testing weak passwords, and people making throwaway accounts to farm free mentor chats.'"
+          "ask": "Who'd actually bother breaking your app — bots, bored kids, or people wanting paid stuff free?",
+          "explain": "Not Hollywood hackers — mostly automated bots plus freeloaders. Knowing which tells you what to lock first.",
+          "example": "'Mostly bots probing passwords, plus people farming free mentor chats.'",
+          "starter": "Most likely: ___ because ___"
         },
         {
           "key": "free_abuse",
           "ask": "What can a stranger do on your app for free that quietly costs YOU money?",
-          "explain": "Sending emails, AI replies, storing files — pennies each, but a bot doing it 10,000 times is a real bill. Find each one, cap each one.",
-          "example": "'Mentor chats cost ~a penny each → capped by credits. Emails → capped by rate limits.'"
+          "explain": "Emails, AI calls, file storage — pennies each until a bot does it 10,000 times. Find them, cap them.",
+          "example": "'Mentor chats cost ~a penny each → capped by credits.'",
+          "starter": "Free but costs me: ___ → capped by ___"
         },
         {
           "key": "breach_plan",
-          "ask": "If you found out someone broke in last week, what are your first 3 moves?",
-          "explain": "Write it now while you're calm: lock the doors (reset keys/passwords), find out what they took, tell the people affected — fast and honest.",
-          "example": "'1) Change every key + log everyone out. 2) Work out whose data was seen. 3) Email those users honestly, same day.'"
+          "ask": "Someone broke in last week — what are your first three moves?",
+          "explain": "Write it while calm: lock the doors, work out what they took, tell people honestly.",
+          "example": "'1) Reset all keys + log everyone out. 2) Work out whose data was seen. 3) Email them same day.'",
+          "starter": "1) Lock: ___  2) Find out: ___  3) Tell: ___"
         }
       ],
       "gate": "You tried to break it as an attacker and couldn't — and you could lose the database right now and recover.",
@@ -291,6 +302,15 @@
         {
           "trap": "No disclaimers or legal pages until someone complains",
           "story": "Even free beta products need: privacy (you hold emails), terms (AI can be wrong — say so), a support path. It takes an afternoon, not a lawyer — but pretending you don't need it is the trap."
+        }
+      ],
+      "questions": [
+        {
+          "key": "launched_means",
+          "ask": "What does 'done' look like — the moment you'd say it's really launched?",
+          "explain": "Something you could photograph, not a feeling. 'When it feels ready' is a trap — it never feels ready.",
+          "example": "'When Sarah's used it a full week and sent a real invoice.'",
+          "starter": "Launched = when ___ actually happens"
         }
       ]
     },
