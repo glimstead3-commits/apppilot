@@ -14,6 +14,15 @@ body {
   display: flex; flex-direction: column; justify-content: space-between;
   position: relative; overflow: hidden;
 }
+/* subtle dot-grid texture so the panel doesn't read flat on wide screens */
+.auth-brand::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,.09) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(160deg, rgba(0,0,0,.6), transparent 75%);
+  pointer-events: none;
+}
+.auth-brand > * { position: relative; }
 .auth-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; }
 .auth-logo-dot {
   width: 30px; height: 30px; border-radius: 9px;
@@ -33,12 +42,29 @@ body {
 }
 .auth-foot { color: #7e8dab; font-size: 12px; }
 
-/* floating product-preview "image" */
+/* floating product-preview "image" — tilted, layered, with a chat bubble */
+.auth-visual { position: relative; max-width: 400px; margin: 34px 0 8px 12px; }
 .auth-preview {
-  margin-top: 34px; max-width: 380px;
-  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
   border-radius: 14px; padding: 16px 18px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  box-shadow: 0 24px 60px rgba(0,0,0,.4);
+  transform: rotate(-1.5deg);
+  backdrop-filter: blur(6px);
+}
+.auth-preview-ghost {
+  position: absolute; inset: 0; transform: rotate(1.6deg) translate(10px, 10px);
+  background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px; z-index: -1;
+}
+.auth-bubble {
+  position: absolute; right: -14px; bottom: -26px; max-width: 250px;
+  background: #f4c95d; color: #17203a; border-radius: 14px 14px 14px 4px;
+  padding: 10px 14px; font-size: 12px; font-weight: 600; line-height: 1.45;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.auth-bubble::after {
+  content: "mentor"; position: absolute; top: -16px; right: 6px;
+  font-size: 10px; color: #8ea0c4; text-transform: uppercase; letter-spacing: .08em;
 }
 .auth-preview-title { font-size: 11px; color: #8ea0c4; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; }
 .auth-step { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; color: #cfd8ea; }
