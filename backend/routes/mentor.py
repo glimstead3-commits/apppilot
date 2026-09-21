@@ -175,6 +175,64 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
     return {"reply": reply, "ai": ai_on and bool(reply)}
 
 
+@router.post("/{project_id}/stages/{stage_key}/draft")
+def mentor_draft(project_id: str, stage_key: str, user=Depends(get_current_user)):
+    """Turn the mentor chat into draft answers for the stage's questions.
+    Spends 1 credit. Returns an answers dict the frontend fills in."""
+    db = _db()
+    try:
+        oid = ObjectId(project_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid project id")
+    p = db.projects.find_one({"_id": oid, "user_id": user["_id"]})
+    if not p:
+        raise HTTPException(status_code=404, detail="Project not found")
+    stage = next((s for s in _stage_defs() if s["key"] == stage_key), None)
+    if not stage:
+        raise HTTPException(status_code=404, detail="Unknown stage")
+    questions = stage.get("questions") or []
+    if not questions:
+        raise HTTPException(status_code=400, detail="This stage has no questions to draft")
+
+    if not os.environ.get("AI_API_KEY"):
+        raise HTTPException(status_code=503, detail="Mentor is not configured")
+    if (user.get("credits_balance") or 0) < MENTOR_COST:
+        raise HTTPException(status_code=402, detail="Out of credits")
+
+    hist = list(db.mentor_messages.find({"project_id": oid, "stage_key": stage_key})
+                .sort("created_at", 1).limit(40))
+    if not hist:
+        raise HTTPException(status_code=400, detail="Chat with the mentor first")
+    convo = "\n".join(f"{h['role']}: {h['content']}" for h in hist)
+
+    keys = ", ".join(f'"{q["key"]}"' for q in questions)
+    asks = "\n".join(f'- "{q["key"]}": {q["ask"]}' for q in questions)
+    prompt = (
+        f"Based on this conversation about the app idea \"{p.get('name','')}\",\n"
+        f"draft concise answers for each question. Output ONLY a JSON object\n"
+        f"with exactly these keys: {keys}\n\nQuestions:\n{asks}\n\n"
+        f"Conversation:\n{convo}\n\nJSON:"
+    )
+    reply = _call_ai(
+        "You convert mentoring chats into structured answers. Output raw JSON only — no markdown fences, no commentary.",
+        [{"role": "user", "content": prompt}],
+    )
+    import json as _json, re as _re
+    m = _re.search(r"\{.*\}", reply, _re.S)
+    answers = _json.loads(m.group(0)) if m else {}
+    answers = {k: str(v) for k, v in answers.items() if k in {q["key"] for q in questions}}
+    if not answers:
+        raise HTTPException(status_code=502, detail="Mentor couldn't draft answers — try again")
+
+    db.users.update_one({"_id": user["_id"]}, {"$inc": {"credits_balance": -MENTOR_COST}})
+    db.credit_transactions.insert_one({
+        "user_id": user["_id"], "amount": -MENTOR_COST, "kind": "spend",
+        "reason": f"mentor_draft:{stage_key}",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"answers": answers}
+
+
 @router.get("/{project_id}/stages/{stage_key}/mentor")
 def mentor_history(project_id: str, stage_key: str, user=Depends(get_current_user)):
     db = _db()

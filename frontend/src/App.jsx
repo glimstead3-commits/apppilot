@@ -178,6 +178,15 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout }) {
                   Stage {p.current_stage} — {stages[p.current_stage]?.title || ""}
                 </div>
               </div>
+              <span
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`Delete "${p.name}"? This can't be undone.`)) {
+                    await api(`/api/projects/${p.id}`, { method: "DELETE" });
+                    loadProjects();
+                  }
+                }}
+                style={{ color: "#cbd5e1", fontSize: 16, padding: "0 4px" }} title="Delete project">✕</span>
               <span style={{ color: "#94a3b8" }}>›</span>
             </button>
           ))}
@@ -314,7 +323,9 @@ function StageCard({ stage, project, onSaved }) {
             Gate: {stage.gate}
           </p>
 
-          <MentorChat projectId={project.id} stageKey={stage.key} />
+          <MentorChat projectId={project.id} stageKey={stage.key}
+            hasQuestions={(stage.questions || []).length > 0}
+            onDraft={(a) => setAnswers((prev) => ({ ...prev, ...a }))} />
         </div>
       )}
     </div>
@@ -323,11 +334,12 @@ function StageCard({ stage, project, onSaved }) {
 
 /* ---------- Mentor chat ---------- */
 
-function MentorChat({ projectId, stageKey }) {
+function MentorChat({ projectId, stageKey, hasQuestions, onDraft }) {
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [err, setErr] = useState("");
 
   const load = () =>
@@ -386,6 +398,21 @@ function MentorChat({ projectId, stageKey }) {
               onKeyDown={(e) => e.key === "Enter" && send()} />
             <button style={{ ...btn, padding: "8px 14px", fontSize: 13 }} onClick={send} disabled={busy || !text.trim()}>Send</button>
           </div>
+          {hasQuestions && msgs.length > 0 && (
+            <button
+              onClick={async () => {
+                setDrafting(true); setErr("");
+                try {
+                  const d = await api(`/api/projects/${projectId}/stages/${stageKey}/draft`, { method: "POST", body: "{}" });
+                  onDraft(d.answers);
+                } catch (e) { setErr(e.message); }
+                finally { setDrafting(false); }
+              }}
+              disabled={drafting}
+              style={{ marginTop: 8, background: "#fdf6e3", border: "1px solid #e8d48b", color: "#8a6d2b", borderRadius: 8, padding: "7px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+              {drafting ? "Drafting…" : "✨ Draft my answers from this chat (1 credit)"}
+            </button>
+          )}
         </div>
       )}
     </div>

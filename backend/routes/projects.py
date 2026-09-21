@@ -125,6 +125,15 @@ def save_stage(project_id: str, stage_key: str, body: StageAnswers,
     return _public(db.projects.find_one({"_id": p["_id"]}))
 
 
+@router.delete("/{project_id}")
+def delete_project(project_id: str, user=Depends(get_current_user)):
+    db = _db()
+    p = _get_owned(db, project_id, user)
+    db.projects.delete_one({"_id": p["_id"]})
+    db.mentor_messages.delete_many({"project_id": p["_id"]})
+    return {"deleted": True}
+
+
 @router.get("/{project_id}/export")
 def export_build_log(project_id: str, user=Depends(get_current_user)):
     """Generate docs/BUILD-LOG.md for the new app's repo — the filled-in
