@@ -295,7 +295,7 @@ function Home({ user, projects, stages, onOpen, onCreated, onLogout, onChanged }
         </div>
       </div>
 
-      {!user.email_verified && (
+      {!user.email_verified && user.email_enabled && (
         <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#92400e" }}>
           📧 Verify your email — check your inbox for a confirmation link.{" "}
           <button onClick={async () => { await api("/api/auth/resend-verify", { method: "POST", body: "{}" }).catch(() => {}); setResent(true); }}

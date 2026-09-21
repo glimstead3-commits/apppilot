@@ -75,4 +75,6 @@ def public_user(u: dict) -> dict:
         "credits_balance": u.get("credits_balance", 0),
         "is_admin": bool(u.get("is_admin")),
         "email_verified": bool(u.get("email_verified")),
+        # Only nag about verification when email can actually be sent.
+        "email_enabled": bool(os.environ.get("RESEND_API_KEY", "").strip()),
     }
