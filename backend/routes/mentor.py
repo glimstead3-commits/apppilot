@@ -52,7 +52,7 @@ PROVIDERS = {
     # Free tier available at aistudio.google.com — good for v1 validation.
     "gemini": {
         "url": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-        "model": os.environ.get("AI_MODEL", "gemini-2.0-flash"),
+        "model": os.environ.get("AI_MODEL", "gemini-2.5-flash"),
     },
 }
 
