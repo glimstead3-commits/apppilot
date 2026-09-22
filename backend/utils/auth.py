@@ -15,6 +15,10 @@ _bearer = HTTPBearer(auto_error=False)
 # not enough to never need to pay. Override via env without a redeploy.
 SIGNUP_CREDITS = int(os.environ.get("SIGNUP_CREDITS", "15"))
 
+# Dev escape hatch: DEV_ALL_ACCESS=1 (local only) unlocks plan gates and
+# credit checks for every account. Never set this in production.
+DEV_ALL_ACCESS = os.environ.get("DEV_ALL_ACCESS") == "1"
+
 # Bootstrap admin via env — "make my account admin" becomes a config step,
 # not a Mongo edit. Comma-separated emails, e.g. ADMIN_EMAILS=me@x.com,bob@y.com
 ADMIN_EMAILS = {

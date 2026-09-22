@@ -29,7 +29,7 @@ from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from utils.auth import get_current_user
+from utils.auth import DEV_ALL_ACCESS, get_current_user
 from utils.database import get_db
 
 router = APIRouter(prefix="/api/projects")
@@ -84,13 +84,33 @@ def _system_prompt(stage: dict, project: dict) -> str:
     if stage.get("traps"):
         traps_txt = "Traps novices hit at this stage (warn them when relevant):\n" + "\n".join(
             f"- {t['trap']}: {t['story']}" for t in stage["traps"])
-    return f"""You are AppPilot's mentor — a patient senior developer guiding a complete novice through building their app "{project.get('name', '')}".
+    check_txt = ""
+    chk = project.get("last_check")
+    if chk:
+        fails = [c["title"] for c in chk.get("checks", []) if c["status"] != "pass"]
+        check_txt = (
+            f"\nTheir live app ({project.get('app_url','')}) was machine-checked: "
+            f"{chk.get('passed',0)}/{chk.get('total',0)} passed"
+            + (f". Still failing: {', '.join(fails)} — you can cite these as fact, they were verified." if fails else " — all green.")
+        )
+    qs = stage.get("questions") or []
+    qs_txt = ""
+    if qs:
+        qs_txt = (
+            "\nYour main job: interview them through this stage's questions — ask them\n"
+            "one at a time, in your own words (never just paste the question):\n"
+            + "\n".join(f"- {q['ask']}" for q in qs)
+            + "\nWhen they've covered them all in chat, tell them their answers are\n"
+            "ready to review below — they'll be drafted automatically."
+        )
+    return f"""You are AppPilot's mentor — a patient senior developer guiding a complete novice through building their app "{project.get('name', '')}".{check_txt}
 
 They are on Stage {stage['order']} — {stage['title']}.
 What this stage is: {stage.get('plain', '')}
 Why it matters: {stage.get('why', '')}
 Gate to pass: {stage.get('gate', '')}
 {traps_txt}
+{qs_txt}
 {f"Their answers so far:{chr(10)}{answers_txt}" if answers_txt else ""}
 
 Rules:
@@ -103,7 +123,7 @@ Rules:
 """
 
 
-def _call_ai(system: str, history: list) -> str:
+def _call_ai(system: str, history: list, max_tokens: int = 800) -> str:
     provider = os.environ.get("AI_PROVIDER", "anthropic").lower()
     cfg = PROVIDERS.get(provider)
     # strip(): pasted keys often carry a trailing newline/space → bad header
@@ -121,10 +141,13 @@ def _call_ai(system: str, history: list) -> str:
                                    "parts": [{"text": h["content"]}]}
                                   for h in history
                               ],
-                              "generationConfig": {"maxOutputTokens": 400},
+                              "generationConfig": {"maxOutputTokens": max_tokens},
                           })
         r.raise_for_status()
-        return r.json()["candidates"][0]["content"]["parts"][0]["text"]
+        # 2.5 models emit "thought" parts (scratchpad reasoning) before the
+        # answer — skip them or we'd return the thinking as the reply.
+        parts = r.json()["candidates"][0]["content"].get("parts") or []
+        return "".join(p.get("text", "") for p in parts if not p.get("thought"))
     if provider == "anthropic":
         r = requests.post(cfg["url"], timeout=30, headers={
             "x-api-key": key,
@@ -132,7 +155,7 @@ def _call_ai(system: str, history: list) -> str:
             "content-type": "application/json",
         }, json={
             "model": cfg["model"],
-            "max_tokens": 400,
+            "max_tokens": max_tokens,
             "system": system,
             "messages": history,
         })
@@ -143,11 +166,29 @@ def _call_ai(system: str, history: list) -> str:
         "content-type": "application/json",
     }, json={
         "model": cfg["model"],
-        "max_tokens": 400,
+        "max_tokens": max_tokens,
         "messages": [{"role": "system", "content": system}] + history,
     })
     r.raise_for_status()
     return r.json()["choices"][0]["message"]["content"]
+
+
+def _extract_answers(reply: str, keys: set) -> dict:
+    """First JSON object in the reply → {key: str}, filtered to the stage's
+    question keys. raw_decode tolerates markdown fences and prose around the
+    object (a greedy \\{.*\\} regex would glue multiple objects together)."""
+    import json, re
+    m = re.search(r"\{", reply)
+    if not m:
+        return {}
+    try:
+        obj, _ = json.JSONDecoder().raw_decode(reply, m.start())
+    except Exception:
+        return {}
+    if not isinstance(obj, dict):
+        return {}
+    return {k: v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
+            for k, v in obj.items() if k in keys}
 
 
 @router.post("/{project_id}/stages/{stage_key}/mentor")
@@ -166,7 +207,7 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
     stage = next((s for s in _stage_defs() if s["key"] == stage_key), None)
     if not stage:
         raise HTTPException(status_code=404, detail="Unknown stage")
-    if user.get("plan") == "free" and stage.get("order", 0) >= 2:
+    if not DEV_ALL_ACCESS and user.get("plan") == "free" and stage.get("order", 0) >= 2:
         raise HTTPException(status_code=402,
                             detail="Upgrade to unlock the mentor for this stage")
 
@@ -176,7 +217,7 @@ def mentor_chat(project_id: str, stage_key: str, body: MentorMessage,
 
     # --- Credit pre-check (spend happens only if the AI actually answers) ---
     ai_on = bool(os.environ.get("AI_API_KEY", "").strip())
-    if ai_on and (user.get("credits_balance") or 0) < MENTOR_COST:
+    if ai_on and not DEV_ALL_ACCESS and (user.get("credits_balance") or 0) < MENTOR_COST:
         raise HTTPException(status_code=402,
                             detail="Out of credits — top up to keep chatting with the mentor")
 
@@ -246,7 +287,7 @@ def mentor_draft(project_id: str, stage_key: str, user=Depends(get_current_user)
     stage = next((s for s in _stage_defs() if s["key"] == stage_key), None)
     if not stage:
         raise HTTPException(status_code=404, detail="Unknown stage")
-    if user.get("plan") == "free" and stage.get("order", 0) >= 2:
+    if not DEV_ALL_ACCESS and user.get("plan") == "free" and stage.get("order", 0) >= 2:
         raise HTTPException(status_code=402,
                             detail="Upgrade to unlock the mentor for this stage")
     questions = stage.get("questions") or []
@@ -255,7 +296,7 @@ def mentor_draft(project_id: str, stage_key: str, user=Depends(get_current_user)
 
     if not os.environ.get("AI_API_KEY", "").strip():
         raise HTTPException(status_code=503, detail="Mentor is not configured")
-    if (user.get("credits_balance") or 0) < MENTOR_COST:
+    if not DEV_ALL_ACCESS and (user.get("credits_balance") or 0) < MENTOR_COST:
         raise HTTPException(status_code=402, detail="Out of credits")
 
     hist = list(db.mentor_messages.find({"project_id": oid, "stage_key": stage_key})
@@ -272,14 +313,27 @@ def mentor_draft(project_id: str, stage_key: str, user=Depends(get_current_user)
         f"with exactly these keys: {keys}\n\nQuestions:\n{asks}\n\n"
         f"Conversation:\n{convo}\n\nJSON:"
     )
-    reply = _call_ai(
-        "You convert mentoring chats into structured answers. Output raw JSON only — no markdown fences, no commentary.",
-        [{"role": "user", "content": prompt}],
-    )
-    import json as _json, re as _re
-    m = _re.search(r"\{.*\}", reply, _re.S)
-    answers = _json.loads(m.group(0)) if m else {}
-    answers = {k: str(v) for k, v in answers.items() if k in {q["key"] for q in questions}}
+    global LAST_AI_ERROR
+    answers = {}
+    # Two tries — a truncated/malformed reply is usually transient, and one
+    # automatic retry beats bouncing the user back to click again.
+    for _ in range(2):
+        try:
+            reply = _call_ai(
+                "You convert mentoring chats into structured answers. Output raw JSON only — no markdown fences, no commentary.",
+                [{"role": "user", "content": prompt}],
+                max_tokens=1500,
+            )
+        except Exception as e:
+            LAST_AI_ERROR = f"{os.environ.get('AI_PROVIDER','anthropic')} draft: {e}"
+            print(f"[mentor] draft AI call failed: {LAST_AI_ERROR}")
+            break
+        answers = _extract_answers(reply, {q["key"] for q in questions})
+        if answers:
+            LAST_AI_ERROR = ""
+            break
+        LAST_AI_ERROR = f"draft: unparseable reply: {reply[:200]!r}"
+        print(f"[mentor] {LAST_AI_ERROR}")
     if not answers:
         raise HTTPException(status_code=502, detail="Mentor couldn't draft answers — try again")
 

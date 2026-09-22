@@ -4,14 +4,14 @@ const API = "";
 const TOKEN_KEY = "ap_token";
 
 const card = {
-  background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "16px 20px",
+  background: "#fff", border: "1px solid #e0e9f7", borderRadius: 12, padding: "16px 20px",
 };
 const input = {
-  width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #cbd5e1",
+  width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #cfe1ff",
   fontSize: 14, marginTop: 4,
 };
 const btn = {
-  background: "#17203a", color: "#fff", border: "none", borderRadius: 8,
+  background: "#2f6bff", color: "#fff", border: "none", borderRadius: 8,
   padding: "10px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer",
 };
 
@@ -40,6 +40,7 @@ export default function App() {
   const [projects, setProjects] = useState([]);
   const [project, setProject] = useState(null);
   const [activeStage, setActiveStage] = useState(null);
+  const [projectTab, setProjectTab] = useState("stages"); // stages | check
   const [fb, setFb] = useState({ open: false, seed: "" });
 
   useEffect(() => {
@@ -74,6 +75,7 @@ export default function App() {
       setProject(p);
       const cur = stages.find((s) => s.order === p.current_stage) || stages[stages.length - 1];
       setActiveStage(cur?.key);
+      setProjectTab("stages");
       setView("project");
     });
 
@@ -89,6 +91,7 @@ export default function App() {
     <Shell user={user} stages={stages}
       project={view === "project" ? project : null}
       activeStage={activeStage} onSelectStage={setActiveStage}
+      tab={view === "project" ? projectTab : "stages"} onSelectTab={setProjectTab}
       onHome={goHome} onLogout={logout}
       fb={{ open: fb.open, seed: fb.seed, show: openFeedback, close: () => setFb({ open: false, seed: "" }) }}>
       {children}
@@ -117,7 +120,10 @@ export default function App() {
         stages={stages}
         activeStage={activeStage}
         onSelectStage={setActiveStage}
+        tab={projectTab}
+        onSelectTab={setProjectTab}
         onSaved={(p) => setProject(p)}
+        onHome={goHome}
       />
     );
   return shell(
@@ -158,7 +164,7 @@ function FeedbackBox({ seed, onClose }) {
   );
 }
 
-function Shell({ user, project, stages, activeStage, onSelectStage, onHome, onLogout, fb, children }) {
+function Shell({ user, project, stages, activeStage, onSelectStage, tab, onSelectTab, onHome, onLogout, fb, children }) {
   const deleteAccount = async () => {
     const pw = window.prompt("Delete your account and ALL projects permanently? Type your password to confirm:");
     if (!pw) return;
@@ -177,21 +183,23 @@ function Shell({ user, project, stages, activeStage, onSelectStage, onHome, onLo
       <aside className="side">
         <div className="side-logo"><span className="side-logo-dot">A</span>AppPilot</div>
 
-        <div className="nav-label">Build</div>
         <button className={`nav-item ${!project ? "on" : ""}`} onClick={onHome}>
-          <span className="ico">▦</span>Projects
+          <span className="ico">▦</span>Dashboard
         </button>
 
         {project && (
           <>
-            <div className="nav-label" title={project.name}>Stages — {projLabel}</div>
+            <button className={`nav-item ${tab === "stages" ? "on" : ""}`} onClick={() => onSelectTab("stages")} title={project.name}>
+              <span className="ico">▤</span>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{projLabel}</span>
+            </button>
             {stages.map((s) => {
               const done = project.stages?.[s.key]?.completed;
               const unlocked = s.order <= project.current_stage;
               return (
                 <button key={s.key}
-                  className={`stage-nav ${done ? "done" : unlocked ? "now" : "locked"} ${s.key === activeStage ? "on" : ""}`}
-                  onClick={() => onSelectStage(s.key)}>
+                  className={`stage-nav ${done ? "done" : unlocked ? "now" : "locked"} ${s.key === activeStage && tab === "stages" ? "on" : ""}`}
+                  onClick={() => { onSelectStage(s.key); onSelectTab("stages"); }}>
                   <span className="sdot">{done ? "✓" : s.order + 1}</span>
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</span>
                 </button>
@@ -201,6 +209,17 @@ function Shell({ user, project, stages, activeStage, onSelectStage, onHome, onLo
         )}
 
         <div className="nav-label">Help</div>
+        {project && (
+          <button className={`nav-item ${tab === "check" ? "on" : ""}`} onClick={() => onSelectTab("check")}>
+            <span className="ico">✓</span>App check
+            {project.last_check && (
+              <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700,
+                color: project.last_check.checks?.some((c) => c.status === "fail") ? "#b91c1c" : "#15803d" }}>
+                {project.last_check.passed}/{project.last_check.total}
+              </span>
+            )}
+          </button>
+        )}
         <a className="nav-item" href="/guides"><span className="ico">?</span>Guides</a>
         <button className="nav-item" onClick={() => fb.show()}><span className="ico">✉</span>Feedback</button>
 
@@ -211,15 +230,23 @@ function Shell({ user, project, stages, activeStage, onSelectStage, onHome, onLo
           </>
         )}
 
-        <div className="side-cred">
-          {user.credits_balance} credits
-          <small>{user.plan} plan{user.plan === "free" ? " · stages 1–2 unlocked" : ""}</small>
-        </div>
+        {user.plan === "free" && (
+          <div className="upg">
+            <div className="star">★</div>
+            <b>Upgrade your plan</b>
+            <p>Unlock all stages + unlimited mentor</p>
+            <button onClick={() => fb.show("Hi — I'd like to upgrade to the full journey")}>GO <span>PRO</span></button>
+          </div>
+        )}
+
         <div className="side-user">
           <span className="avatar">{initials}</span>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || user.email}</div>
-            <button onClick={onLogout} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 11, cursor: "pointer", padding: 0 }}>Log out</button>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+              {user.plan} plan · {user.credits_balance} cr ·{" "}
+              <button onClick={onLogout} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 11, cursor: "pointer", padding: 0, textDecoration: "underline" }}>Log out</button>
+            </div>
           </div>
         </div>
         <div className="side-legal">
@@ -232,11 +259,11 @@ function Shell({ user, project, stages, activeStage, onSelectStage, onHome, onLo
         <div className="mobile-top">
           <span className="side-logo-dot" style={{ width: 24, height: 24, fontSize: 12 }}>A</span>
           {project
-            ? <button onClick={onHome} style={{ background: "none", border: "none", color: "#8a6d2b", fontSize: 13, cursor: "pointer" }}>← Projects</button>
+            ? <button onClick={onHome} style={{ background: "none", border: "none", color: "#2f6bff", fontSize: 13, cursor: "pointer" }}>← Projects</button>
             : <span>AppPilot</span>}
           <span className="right">
-            <a href="/guides" style={{ color: "#8a6d2b", textDecoration: "none" }}>Guides</a>
-            <span style={{ color: "#8a6d2b", fontWeight: 700 }}>{user.credits_balance} cr</span>
+            <a href="/guides" style={{ color: "#2f6bff", textDecoration: "none" }}>Guides</a>
+            <span style={{ color: "#2f6bff", fontWeight: 700 }}>{user.credits_balance} cr</span>
             <button onClick={onLogout} style={{ background: "none", border: "none", color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>Log out</button>
           </span>
         </div>
@@ -345,7 +372,7 @@ function Auth({ onDone }) {
             <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, color: "#64748b", marginBottom: 14, cursor: "pointer" }}>
               <input type="checkbox" style={{ marginTop: 2, width: "auto" }} checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)} />
-              <span>I agree to the <a href="/terms" target="_blank" style={{ color: "#8a6d2b" }}>Terms</a> and <a href="/privacy" target="_blank" style={{ color: "#8a6d2b" }}>Privacy Policy</a></span>
+              <span>I agree to the <a href="/terms" target="_blank" style={{ color: "#2f6bff" }}>Terms</a> and <a href="/privacy" target="_blank" style={{ color: "#2f6bff" }}>Privacy Policy</a></span>
             </label>
           )}
           {err && <p className="auth-err">{err}</p>}
@@ -419,7 +446,7 @@ function Home({ user, projects, stages, onOpen, onCreated, onChanged, onUpgrade 
           📧 Verify your email — check your inbox for a confirmation link.{" "}
           <button onClick={async () => { await api("/api/auth/resend-verify", { method: "POST", body: "{}" }).catch(() => {}); setResent(true); }}
             disabled={resent}
-            style={{ background: "none", border: "none", color: "#8a6d2b", fontWeight: 700, cursor: "pointer", fontSize: 12, padding: 0 }}>
+            style={{ background: "none", border: "none", color: "#2f6bff", fontWeight: 700, cursor: "pointer", fontSize: 12, padding: 0 }}>
             {resent ? "Sent ✓" : "Resend"}
           </button>
         </div>
@@ -483,7 +510,7 @@ function Home({ user, projects, stages, onOpen, onCreated, onChanged, onUpgrade 
 
 /* ---------- Project: stages + interview ---------- */
 
-function ProjectView({ project, stages, activeStage, onSelectStage, onSaved }) {
+function ProjectView({ project, stages, activeStage, onSelectStage, tab, onSelectTab, onSaved, onHome }) {
   const [me, setMe] = useState(null);
   const refreshMe = () => api("/api/auth/me").then(setMe).catch(() => {});
   useEffect(() => { refreshMe(); }, []);
@@ -502,19 +529,30 @@ function ProjectView({ project, stages, activeStage, onSelectStage, onSaved }) {
     || stages.find((s) => s.order === project.current_stage)
     || stages[0];
 
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const first = (me?.name || "").split(" ")[0] || "there";
+  const doneCount = stages.filter((s) => project.stages?.[s.key]?.completed).length;
+  const initials = (me?.name || me?.email || "?").slice(0, 2).toUpperCase();
+
+  // The app-check milestone sits on the path after "foundation".
+  const CHECK_AFTER = "foundation";
+
   return (
     <>
-      <div className="main-top">
+      <div className="head2">
         <div>
-          <h1>{project.name}</h1>
-          {stage && <div className="sub">Stage {stage.order + 1} of {stages.length} — {stage.title}</div>}
+          <h1>{greet}, {first} 👋</h1>
+          <div className="sub">Your build journey — {doneCount} of {stages.length} stages complete</div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {me && <span className="pill gold" style={{ marginLeft: 0 }}>{me.credits_balance} credits</span>}
-          <button onClick={exportLog}
-            className="newbtn" style={{ background: "#fff", color: "#17203a", border: "1px solid #cbd5e1" }}>
-            ⬇ Build log
-          </button>
+        <div className="act">
+          <button onClick={exportLog} className="back hidemob" title="Download your build log">⬇ Log</button>
+          <button className="btn-p" onClick={onHome}>New Build ＋</button>
+          {me && <span className="cred2">{me.credits_balance} credits</span>}
+          <div className="uchip">
+            <span className="av2">{initials}</span>
+            <div><div className="nm">{me?.name || me?.email}</div><div className="rl">{me?.plan} plan</div></div>
+          </div>
         </div>
       </div>
 
@@ -524,36 +562,133 @@ function ProjectView({ project, stages, activeStage, onSelectStage, onSaved }) {
           const unlocked = s.order <= project.current_stage;
           return (
             <button key={s.key}
-              className={`chip ${s.key === activeStage ? "on" : ""} ${done ? "done" : ""} ${unlocked ? "" : "locked"}`}
-              onClick={() => onSelectStage(s.key)}>
+              className={`chip ${s.key === activeStage && tab === "stages" ? "on" : ""} ${done ? "done" : ""} ${unlocked ? "" : "locked"}`}
+              onClick={() => { onSelectStage(s.key); onSelectTab("stages"); }}>
               {done ? "✓" : s.order + 1} {s.title}
             </button>
           );
         })}
+        <button className={`chip ${tab === "check" ? "on" : ""}`} onClick={() => onSelectTab("check")}>
+          ✓ Check
+        </button>
       </div>
 
-      {stage && (
-        <StageCard key={stage.key} stage={stage} project={project} solo
-          onSaved={(p) => {
-            onSaved(p);
-            const next = stages.find((s) => s.order === stage.order + 1);
-            if (p.stages?.[stage.key]?.completed && next) onSelectStage(next.key);
-          }}
-          onSpent={refreshMe}
-          planLocked={(me?.plan ?? "free") === "free" && stage.order >= 2} />
-      )}
+      <div className="body2">
+        <div className={`journey ${tab === "check" ? "flat" : ""}`}>
+          {tab === "check" ? (
+            <AppCheck project={project} onSaved={onSaved} />
+          ) : stages.map((s) => {
+            const done = project.stages?.[s.key]?.completed;
+            const unlocked = s.order <= project.current_stage;
+            const items = [];
+            if (s.key === stage?.key) {
+              items.push(
+                <StageCard key={s.key} stage={s} project={project}
+                  onSaved={(p) => {
+                    onSaved(p);
+                    const next = stages.find((x) => x.order === s.order + 1);
+                    if (p.stages?.[s.key]?.completed && next) onSelectStage(next.key);
+                  }}
+                  onSpent={refreshMe}
+                  planLocked={(me?.plan ?? "free") === "free" && s.order >= 2} />
+              );
+            } else {
+              items.push(
+                <button key={s.key}
+                  className={`node ${done ? "done" : s.order === project.current_stage ? "now" : "locked"}`}
+                  onClick={() => { onSelectStage(s.key); onSelectTab("stages"); }}>
+                  <div className="nc">{done ? "✓" : s.order + 1}</div>
+                  <div className="nbody">
+                    <span className="tag">
+                      {done ? "Passed" : s.order === project.current_stage ? "You're here" : unlocked ? "Unlocked" : "Locked"}
+                    </span>
+                    <b>{s.title}</b>
+                    <span>{s.plain?.split(".")[0]}</span>
+                  </div>
+                </button>
+              );
+            }
+            if (s.key === CHECK_AFTER) {
+              items.push(
+                <button key="__check" className="node mile" onClick={() => onSelectTab("check")}>
+                  <div className="nc">✓</div>
+                  <div className="nbody">
+                    <b>App check</b>
+                    <span>{project.last_check
+                      ? `${project.last_check.passed}/${project.last_check.total} passed — tap to re-check`
+                      : "we'll verify your live URL here"}</span>
+                  </div>
+                </button>
+              );
+            }
+            return items;
+          })}
+        </div>
+
+        {tab === "stages" && stage && (
+          <div className="rail2">
+            <div className="rcard gate">
+              <h3>To pass this stage</h3>
+              <p>{stage.gate}</p>
+            </div>
+            {stage.traps?.length > 0 && (
+              <div className="rcard">
+                <h3>Traps novices hit here</h3>
+                {stage.traps.map((t, i) => (
+                  <details key={i} className="trap">
+                    <summary>{t.trap}</summary>
+                    <p>{t.story}</p>
+                  </details>
+                ))}
+              </div>
+            )}
+            {stage.guided_steps?.length > 0 && (
+              <div className="rcard">
+                <h3>{stage.guided_steps_intro || "How to do it"}</h3>
+                <ol>{stage.guided_steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
+              </div>
+            )}
+            <div className="rcard">
+              <h3>App check</h3>
+              {project.last_check ? (
+                <>
+                  <div className="score">
+                    <span className="n">{project.last_check.passed}/{project.last_check.total}</span>
+                    <div><b>{project.app_url}</b><span>tap below for the report</span></div>
+                  </div>
+                  <button className="mini" onClick={() => onSelectTab("check")}>Open report</button>
+                </>
+              ) : (
+                <>
+                  <p className="why">Not checked yet — point us at your live URL and we'll verify it for real.</p>
+                  <button className="mini" onClick={() => onSelectTab("check")}>Run first check</button>
+                </>
+              )}
+            </div>
+            {stage.why && (
+              <div className="rcard">
+                <h3>Why this stage matters</h3>
+                <p className="why">{stage.why}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
 }
 
-function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
+function StageCard({ stage, project, onSaved, onSpent, planLocked }) {
   const done = project.stages?.[stage.key]?.completed;
   const unlocked = stage.order <= project.current_stage;
-  const [open, setOpen] = useState(solo || stage.order === project.current_stage);
   const [answers, setAnswers] = useState(project.stages?.[stage.key]?.answers || {});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [mode, setMode] = useState("talk"); // "talk" = mentor page, "write" = question pages
   const [stepIdx, setStepIdx] = useState(0);
+  const [chatCount, setChatCount] = useState(0);
+  const [aiOn, setAiOn] = useState(false);
+  const [drafting, setDrafting] = useState(false);
 
   // One step per question; the checklist becomes the final step.
   const steps = [
@@ -590,163 +725,154 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
     } finally { setBusy(false); }
   };
 
+  // Mentor drafts answers from the chat — fills blanks only, never
+  // overwrites something the user typed, then opens the review pages.
+  const runDraft = async () => {
+    setDrafting(true); setErr("");
+    try {
+      const d = await api(`/api/projects/${project.id}/stages/${stage.key}/draft`, {
+        method: "POST", body: "{}",
+      });
+      setAnswers((prev) => {
+        const merged = { ...prev };
+        for (const [k, v] of Object.entries(d.answers)) {
+          if (!String(prev[k] || "").trim()) merged[k] = v;
+        }
+        return merged;
+      });
+      onSpent?.();
+      setMode("write");
+    } catch (e) { setErr(e.message); }
+    finally { setDrafting(false); }
+  };
+
+  const answeredCount = (stage.questions || []).filter((q) => String(answers[q.key] || "").trim()).length;
+  const blanks = (stage.questions || []).some((q) => !String(answers[q.key] || "").trim());
+  const canDraft = chatCount > 0 && aiOn && blanks;
+  const ctaLabel = !blanks ? "Review my answers →" : canDraft ? "Fill in my answers →" : "Answer the questions →";
+  const writing = mode === "write" && steps.length > 0;
+
   return (
-    <div className={solo ? "stage-panel solo" : "stage-panel"}
-      style={{ opacity: unlocked ? 1 : 0.55 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: solo ? "default" : "pointer" }}
-        onClick={() => !solo && unlocked && setOpen(!open)}>
-        <span style={{
-          width: 26, height: 26, borderRadius: "50%", fontSize: 12, fontWeight: 700, flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: done ? "#16a34a" : unlocked ? "#c9a227" : "#eef1f6",
-          color: done || unlocked ? "#fff" : "#64748b",
-        }}>{done ? "✓" : stage.order}</span>
-        <span style={{ fontWeight: 700 }}>Stage {stage.order + 1} — {stage.title}</span>
-        <span style={{ marginLeft: "auto", fontSize: 11, color: "#94a3b8" }}>
-          {done ? "passed" : unlocked ? (solo ? "" : open ? "tap to close" : "tap to open") : "locked"}
-        </span>
+    <div className="stage-card" style={{ opacity: unlocked ? 1 : 0.55 }}>
+      <div className="eyebrow">
+        Stage {stage.order + 1} — {done ? "passed" : unlocked ? "you're here" : "locked"}
       </div>
+      <h2>{stage.title}</h2>
 
-      {open && unlocked && (
-        <div style={{ marginTop: 12 }}>
-          <p style={{ fontSize: 14, color: "#334155", lineHeight: 1.5 }}>{stage.plain}</p>
-          <p style={{ marginTop: 6, fontSize: 12, color: "#8a6d2b" }}><strong>Why:</strong> {stage.why}</p>
-
-          {stage.guided_steps?.length > 0 && (
-            <div style={{ marginTop: 12, background: "#f8fafc", borderRadius: 8, padding: "10px 14px" }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 6 }}>
-                {stage.guided_steps_intro || "How to do it:"}
-              </p>
-              <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "#334155", lineHeight: 1.7 }}>
-                {stage.guided_steps.map((step, i) => <li key={i}>{step}</li>)}
-              </ol>
+      {!unlocked ? (
+        <>
+          <p className="plain">{stage.plain}</p>
+          <div className="gate"><b>To pass:</b> {stage.gate}</div>
+        </>
+      ) : planLocked && !done ? (
+        <>
+          <p className="plain">{stage.plain}</p>
+          <div className="gate"><b>To pass:</b> {stage.gate}</div>
+          <div className="upsell">
+            <b>🔒 This stage is part of the full journey</b>
+            <p>Your free plan covers Define &amp; Architect. Upgrade to unlock the mentor
+              and all remaining stages — traps, guided steps and the gate are shown in the
+              side panel so you can see exactly what you'd be guided through.</p>
+          </div>
+        </>
+      ) : writing ? (
+        /* ---- Question page: one step at a time, nothing else on screen ---- */
+        <>
+          <button className="back" onClick={() => { setMode("talk"); setErr(""); }}>
+            ← Back to the mentor
+          </button>
+          <div className="qblock">
+            <div className="qmeta">
+              <span className="qn">
+                {step.type === "checklist" ? "Last step — the checklist" : `Question ${stepIdx + 1} of ${(stage.questions || []).length}`}
+              </span>
+              <span className="dots">
+                {steps.map((_, i) => (
+                  <i key={i} className={i < stepIdx ? "d" : i === stepIdx ? "n" : ""} />
+                ))}
+              </span>
             </div>
-          )}
 
-          {stage.traps?.length > 0 && (
-            <div style={{ marginTop: 12, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 14px" }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#92400e", marginBottom: 6 }}>⚠ Traps novices hit here:</p>
-              {stage.traps.map((t, i) => (
-                <p key={i} style={{ fontSize: 12, color: "#92400e", lineHeight: 1.55, marginBottom: 6 }}>
-                  <strong>{t.trap}.</strong> {t.story}
+            {step.type === "q" && (
+              <div>
+                <div className="qask">{step.ask}</div>
+                {step.explain && <p className="qex">{step.explain}</p>}
+                {step.example && (
+                  <div className="qexx">💡 <strong>A real answer looks like:</strong> {step.example}</div>
+                )}
+                <textarea className="qta"
+                  value={answers[step.key] || ""}
+                  onChange={(e) => setAnswers({ ...answers, [step.key]: e.target.value })}
+                  placeholder="Your answer — plain words are perfect…"
+                />
+                {step.starter && !String(answers[step.key] || "").trim() && (
+                  <button className="starter"
+                    onClick={() => setAnswers({ ...answers, [step.key]: step.starter })}>
+                    📝 Start from a template — just fill the blanks
+                  </button>
+                )}
+                {err
+                  ? <p className="qerr">{err}</p>
+                  : <p className="qhint">
+                      Stuck? That's normal — go back to the mentor and it can help you draft this answer.
+                    </p>}
+              </div>
+            )}
+
+            {step.type === "checklist" && (
+              <div>
+                <p className="qex" style={{ fontWeight: 700, color: "#475569" }}>
+                  Tick each only when it's actually true — honesty here is the whole point:
                 </p>
-              ))}
-            </div>
-          )}
+                {stage.checklist.map((item, i) => (
+                  <label key={i} className={`cl-item ${answers[`check:${i}`] ? "on" : ""}`}>
+                    <input type="checkbox"
+                      checked={answers[`check:${i}`] === true}
+                      onChange={(e) => setAnswers({ ...answers, [`check:${i}`]: e.target.checked })} />
+                    <span>{item}</span>
+                  </label>
+                ))}
+                {err && <p className="qerr">{err}</p>}
+              </div>
+            )}
 
-          {planLocked && !done ? (
-            <div style={{ marginTop: 12, background: "#fdf6e3", border: "1px solid #e8d48b", borderRadius: 8, padding: "12px 14px" }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "#8a6d2b", marginBottom: 4 }}>🔒 This stage is part of the full journey</p>
-              <p style={{ fontSize: 13, color: "#6b5a1e", lineHeight: 1.5, margin: 0 }}>
-                Your free plan covers Define &amp; Architect. Upgrade to unlock the mentor and all
-                remaining stages — everything above is exactly what you'd be guided through.
-              </p>
+            <div className="qnav">
+              {stepIdx > 0 && (
+                <button className="back" onClick={() => { setStepIdx(stepIdx - 1); setErr(""); }}>← Back</button>
+              )}
+              {stepIdx < steps.length - 1 ? (
+                <button className="next" onClick={() => { setStepIdx(stepIdx + 1); setErr(""); }}>Next →</button>
+              ) : (
+                <button className="next" onClick={save} disabled={busy}>
+                  {busy ? "Saving…" : done ? "Update answers" : "Save — finish this stage"}
+                </button>
+              )}
             </div>
-          ) : (<>
+          </div>
+        </>
+      ) : (
+        /* ---- Mentor page: intro + conversation, questions come after ---- */
+        <>
+          <p className="plain">{stage.plain}</p>
+
           <MentorChat projectId={project.id} stageKey={stage.key}
+            firstAsk={stage.questions?.[0]?.ask}
             hasQuestions={(stage.questions || []).length > 0}
             onSpent={onSpent}
-            onDraft={(a) => setAnswers((prev) => ({ ...prev, ...a }))} />
+            onCount={(n, ai) => { setChatCount(n); setAiOn(ai); }}
+            onDraftFill={runDraft}
+            drafting={drafting} />
 
           {steps.length > 0 && (
-            <div style={{ marginTop: 18 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#3730a3", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 10 }}>
-                Step 2 · Your answers
-              </p>
-              {/* step progress */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".08em" }}>
-                  {step.type === "checklist" ? "Last step — the checklist" : `Question ${stepIdx + 1} of ${(stage.questions || []).length}`}
-                </span>
-                <div style={{ display: "flex", gap: 4 }}>
-                  {steps.map((_, i) => (
-                    <span key={i} style={{
-                      width: 18, height: 4, borderRadius: 2,
-                      background: i < stepIdx ? "#16a34a" : i === stepIdx ? "#f4c95d" : "#e2e8f0",
-                    }} />
-                  ))}
-                </div>
-              </div>
-
-              {step.type === "q" && (
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#17203a", lineHeight: 1.4, marginBottom: 6 }}>
-                    {step.ask}
-                  </div>
-                  {step.explain && (
-                    <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 10 }}>{step.explain}</p>
-                  )}
-                  {step.example && (
-                    <div style={{ background: "#eef4ff", border: "1px solid #c7d7fe", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 13, color: "#3730a3", lineHeight: 1.55 }}>
-                      💡 <strong>A real answer looks like:</strong> {step.example}
-                    </div>
-                  )}
-                  <textarea
-                    style={{ ...input, minHeight: 90, resize: "vertical", fontSize: 15 }}
-                    value={answers[step.key] || ""}
-                    onChange={(e) => setAnswers({ ...answers, [step.key]: e.target.value })}
-                    placeholder="Your answer — plain words are perfect…"
-                  />
-                  {step.starter && !String(answers[step.key] || "").trim() && (
-                    <button
-                      onClick={() => setAnswers({ ...answers, [step.key]: step.starter })}
-                      style={{ marginTop: 6, background: "none", border: "1px dashed #cbd5e1", borderRadius: 8, padding: "6px 12px", fontSize: 12, color: "#64748b", cursor: "pointer" }}>
-                      📝 Start from a template — just fill the blanks
-                    </button>
-                  )}
-                  {err
-                    ? <p style={{ fontSize: 13, color: "#b45309", marginTop: 8 }}>{err}</p>
-                    : <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>
-                        Stuck? That's normal — ask the mentor below and it can help you draft this answer.
-                      </p>}
-                </div>
-              )}
-
-              {step.type === "checklist" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#475569", marginBottom: 2 }}>
-                    Tick each only when it's actually true — honesty here is the whole point:
-                  </p>
-                  {stage.checklist.map((item, i) => (
-                    <label key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13.5, color: "#334155", cursor: "pointer", padding: "6px 8px", borderRadius: 6, background: answers[`check:${i}`] ? "#f0fdf4" : "transparent" }}>
-                      <input type="checkbox" style={{ marginTop: 2 }}
-                        checked={answers[`check:${i}`] === true}
-                        onChange={(e) => setAnswers({ ...answers, [`check:${i}`]: e.target.checked })} />
-                      <span>{item}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-
-              {/* step navigation */}
-              <div style={{ display: "flex", gap: 10, marginTop: 16, alignItems: "center" }}>
-                {stepIdx > 0 && (
-                  <button onClick={() => { setStepIdx(stepIdx - 1); setErr(""); }}
-                    style={{ background: "#fff", color: "#475569", border: "1px solid #cbd5e1", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                    ← Back
-                  </button>
-                )}
-                {stepIdx < steps.length - 1 ? (
-                  <button style={btn} onClick={() => { setStepIdx(stepIdx + 1); setErr(""); }}>
-                    Next →
-                  </button>
-                ) : (
-                  <>
-                    {err && <p style={{ color: "#b91c1c", fontSize: 13 }}>{err}</p>}
-                    <button style={btn} onClick={save} disabled={busy}>
-                      {busy ? "Saving…" : done ? "Update answers" : "Save — finish this stage"}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+            <>
+              <button className="btn-p write-cta" disabled={drafting}
+                onClick={async () => { setErr(""); if (canDraft) await runDraft(); else setMode("write"); }}>
+                {drafting ? "Mentor is writing your answers…" : ctaLabel}
+              </button>
+              {err && <p className="qerr">{err}</p>}
+            </>
           )}
-
-          <p style={{ marginTop: 10, fontSize: 12, color: "#64748b", fontStyle: "italic" }}>
-            To pass this stage: {stage.gate}
-          </p>
-          </>)}
-        </div>
+        </>
       )}
     </div>
   );
@@ -754,17 +880,17 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked, solo }) {
 
 /* ---------- Mentor chat ---------- */
 
-function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
-  const [open, setOpen] = useState(true);
+function MentorChat({ projectId, stageKey, firstAsk, hasQuestions, onSpent, onCount, onDraftFill, drafting }) {
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const [drafting, setDrafting] = useState(false);
   const [err, setErr] = useState("");
+  const [aiOn, setAiOn] = useState(true); // assume on until history says otherwise
 
   const load = () =>
     api(`/api/projects/${projectId}/stages/${stageKey}/mentor`)
-      .then((d) => setMsgs(d.messages)).catch(() => {});
+      .then((d) => { setMsgs(d.messages); setAiOn(d.ai); onCount?.(d.messages.length, d.ai); })
+      .catch(() => {});
 
   useEffect(() => { load(); }, [stageKey]);
 
@@ -778,6 +904,8 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
         method: "POST", body: JSON.stringify({ message }),
       });
       setMsgs((m) => [...m, { role: "assistant", content: d.reply }]);
+      setAiOn(d.ai);
+      onCount?.(msgs.length + 2, d.ai);
       onSpent?.();
     } catch (e) {
       setErr(e.message);
@@ -787,81 +915,133 @@ function MentorChat({ projectId, stageKey, hasQuestions, onDraft, onSpent }) {
   };
 
   return (
-    <div style={{ marginTop: 14, background: "#fafbff", border: "1px solid #dbe4f5", borderRadius: 10, padding: "14px 16px" }}>
-      <div style={{ display: "flex", alignItems: "center", marginBottom: open ? 10 : 0 }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: "#3730a3", textTransform: "uppercase", letterSpacing: ".08em" }}>
-          Step 1 · Chat it through with the mentor
-        </p>
-        <button onClick={() => setOpen(!open)}
-          style={{ marginLeft: "auto", background: "none", border: "none", color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>
-          {open ? "hide" : "show"}
-        </button>
-      </div>
-      {!open ? null : (
-        <div>
-          <p style={{ fontSize: 12.5, color: "#64748b", marginBottom: 10, lineHeight: 1.5 }}>
-            Easiest way to do this stage: just tell the mentor about your idea in plain words.
-            It'll ask the right questions — then it can fill in the answers below for you.
-          </p>
-          <div style={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
-            {msgs.length === 0 && (
-              <div style={{
-                alignSelf: "flex-start", background: "#f1f5f9", color: "#1e293b",
-                borderRadius: 10, padding: "8px 12px", fontSize: 13, maxWidth: "85%", lineHeight: 1.5,
-              }}>
-                👋 Hi — I'm your mentor for this stage. Forget the questions for now — just tell me: what's the app idea, in your own words?
-              </div>
-            )}
-            {msgs.map((m, i) => (
-              <div key={i} style={{
-                alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-                background: m.role === "user" ? "#17203a" : "#f1f5f9",
-                color: m.role === "user" ? "#fff" : "#1e293b",
-                borderRadius: 10, padding: "8px 12px", fontSize: 13, maxWidth: "85%",
-                whiteSpace: "pre-wrap", lineHeight: 1.5,
-              }}>
-                {m.content}
-              </div>
-            ))}
-            {busy && <div style={{ fontSize: 12, color: "#94a3b8" }}>mentor is typing…</div>}
+    <div>
+      {msgs.length === 0 && (
+        <div className="mentor-row">
+          <div className="mav">M</div>
+          <div className="mentor-bub">
+            👋 I'll ask you a few questions about your app — then write up your answers
+            from what you tell me. You can edit everything before it's saved.
+            <br /><br />
+            <b>{firstAsk || "So — what's the app idea, in your own words?"}</b>
           </div>
-          {msgs.length === 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-              {["Here's my app idea: ", "I'm not sure where to start", "Help me answer the questions below"].map((s) => (
-                <button key={s}
-                  onClick={() => { setText(s); }}
-                  style={{ fontSize: 12, background: "#eef2ff", color: "#3730a3", border: "1px solid #c7d2fe", borderRadius: 999, padding: "4px 10px", cursor: "pointer" }}>
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-          {err && <p style={{ color: "#b91c1c", fontSize: 12, marginBottom: 6 }}>{err}</p>}
-          <div style={{ display: "flex", gap: 8 }}>
-            <input style={{ ...input, marginTop: 0, flex: 1 }} placeholder="Tell the mentor about your idea… (1 credit)"
-              value={text} onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && send()} />
-            <button style={{ ...btn, padding: "8px 14px", fontSize: 13 }} onClick={send} disabled={busy || !text.trim()}>Send</button>
-          </div>
-          {hasQuestions && msgs.length > 0 && (
-            <button
-              onClick={async () => {
-                setDrafting(true); setErr("");
-                try {
-                  const d = await api(`/api/projects/${projectId}/stages/${stageKey}/draft`, { method: "POST", body: "{}" });
-                  onDraft(d.answers);
-                  onSpent?.();
-                } catch (e) { setErr(e.message); }
-                finally { setDrafting(false); }
-              }}
-              disabled={drafting}
-              style={{ marginTop: 8, background: "#fdf6e3", border: "1px solid #e8d48b", color: "#8a6d2b", borderRadius: 8, padding: "7px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-              {drafting ? "Drafting…" : "✨ Draft my answers from this chat (1 credit)"}
-            </button>
-          )}
         </div>
       )}
+
+      <div style={{ maxHeight: 340, overflowY: "auto" }}>
+        {msgs.map((m, i) =>
+          m.role === "assistant" ? (
+            <div key={i} className="mentor-row">
+              <div className="mav">M</div>
+              <div className="mentor-bub">{m.content}</div>
+            </div>
+          ) : (
+            <div key={i} className="you-bub">{m.content}</div>
+          )
+        )}
+        {busy && <div className="typing">mentor is typing…</div>}
+      </div>
+
+      {msgs.length === 0 && (
+        <div className="chiprow">
+          {["Here's my app idea: ", "I'm not sure where to start", "Help me answer the questions below"].map((s) => (
+            <button key={s} onClick={() => setText(s)}>{s}</button>
+          ))}
+        </div>
+      )}
+
+      <div className="reply">
+        <input placeholder="Tell the mentor about your idea… (1 credit)"
+          value={text} onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()} />
+        <button onClick={send} disabled={busy || !text.trim()}>→</button>
+      </div>
+      {err && <p className="merr">{err}</p>}
+
+      {hasQuestions && msgs.length > 0 && aiOn && (
+        <button className="draft" onClick={onDraftFill} disabled={drafting}>
+          {drafting ? "Mentor is writing your answers…" : "✨ Fill in my answers from this chat"}
+        </button>
+      )}
     </div>
+  );
+}
+
+/* ---------- App check — the mentor verifies, not just advises ---------- */
+
+function AppCheck({ project, onSaved }) {
+  const [url, setUrl] = useState(project.app_url || "");
+  const [busy, setBusy] = useState(false);
+  const [res, setRes] = useState(project.last_check || null);
+  const [err, setErr] = useState("");
+
+  const run = async (e) => {
+    e?.preventDefault();
+    if (!url.trim() || busy) return;
+    setBusy(true); setErr("");
+    try {
+      const d = await api(`/api/projects/${project.id}/check`, {
+        method: "POST", body: JSON.stringify({ url }),
+      });
+      setRes(d);
+      onSaved({ ...project, app_url: d.url, last_check: d });
+    } catch (e2) { setErr(e2.message); }
+    finally { setBusy(false); }
+  };
+
+  const verdict = res && (
+    res.passed === res.total
+      ? "Everything we checked passed — genuinely nice work."
+      : res.checks.some((c) => c.status === "fail")
+        ? "Fix the red ones first — those are the dangerous ones."
+        : "Mostly good — the yellow ones are worth ten minutes.");
+
+  return (
+    <section className="panel">
+      <div className="eyebrow" style={{ marginBottom: 8 }}>App check</div>
+      <h2 style={{ fontSize: 20, fontWeight: 800, color: "#16233f" }}>Is it actually working?</h2>
+      <p style={{ fontSize: 14, color: "#64748b", lineHeight: 1.65, marginTop: 8, maxWidth: 560 }}>
+        Paste your app's live address and we'll really check it — does it load, is it
+        secure, is anything leaking. Not advice — verification.
+      </p>
+
+      <form onSubmit={run} style={{ display: "flex", gap: 10, marginTop: 18 }}>
+        <input style={{ ...input, marginTop: 0, flex: 1 }}
+          placeholder="https://yourapp.onrender.com"
+          value={url} onChange={(e) => setUrl(e.target.value)} />
+        <button className="newbtn" disabled={busy || !url.trim()}>
+          {busy ? "Checking…" : res ? "Re-check" : "Check it"}
+        </button>
+      </form>
+      {err && <p style={{ color: "#b91c1c", fontSize: 13, marginTop: 10 }}>{err}</p>}
+
+      {res && (
+        <div>
+          <div className="ck-score">
+            <span className="n">{res.passed}/{res.total}</span>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>checks passed</div>
+              <div style={{ fontSize: 13, color: "#64748b" }}>{verdict}</div>
+            </div>
+          </div>
+          <div>
+            {res.checks.map((c, i) => (
+              <div key={i} className={`ck ${c.status}`}>
+                <span className="ic">{c.status === "pass" ? "✓" : c.status === "warn" ? "!" : "✕"}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="t">{c.title}</div>
+                  <div className="d">{c.detail}</div>
+                  {c.fix && <div className="fix"><b>How to fix:</b> {c.fix}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 14 }}>
+            Checked {new Date(res.checked_at).toLocaleString()} · {res.url}
+          </p>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -930,19 +1110,19 @@ function LegalPage({ docKey }) {
   if (!doc) return <div style={{ padding: 60, textAlign: "center", color: "#64748b" }}>Loading…</div>;
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 20px" }}>
-      <a href="/" style={{ fontSize: 13, color: "#8a6d2b", textDecoration: "none" }}>← AppPilot</a>
+      <a href="/" style={{ fontSize: 13, color: "#2f6bff", textDecoration: "none" }}>← AppPilot</a>
       <h1 style={{ fontSize: 28, margin: "16px 0 4px" }}>{doc.title}</h1>
       <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 28 }}>Last updated: {doc.updated}</p>
       {doc.sections.map((s, i) => (
         <div key={i} style={{ marginBottom: 20 }}>
-          <h3 style={{ fontSize: 15, marginBottom: 6, color: "#17203a" }}>{s.h}</h3>
+          <h3 style={{ fontSize: 15, marginBottom: 6, color: "#16233f" }}>{s.h}</h3>
           <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.65 }}>{s.body}</p>
         </div>
       ))}
       <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid #e2e8f0", fontSize: 12, color: "#94a3b8" }}>
-        <a href="/privacy" style={{ color: "#8a6d2b", marginRight: 16 }}>Privacy</a>
-        <a href="/terms" style={{ color: "#8a6d2b", marginRight: 16 }}>Terms</a>
-        <a href="/security" style={{ color: "#8a6d2b" }}>Security</a>
+        <a href="/privacy" style={{ color: "#2f6bff", marginRight: 16 }}>Privacy</a>
+        <a href="/terms" style={{ color: "#2f6bff", marginRight: 16 }}>Terms</a>
+        <a href="/security" style={{ color: "#2f6bff" }}>Security</a>
       </div>
     </div>
   );
@@ -958,7 +1138,7 @@ function GuidesPage() {
   }, []);
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 20px" }}>
-      <a href="/" style={{ fontSize: 13, color: "#8a6d2b", textDecoration: "none" }}>← AppPilot</a>
+      <a href="/" style={{ fontSize: 13, color: "#2f6bff", textDecoration: "none" }}>← AppPilot</a>
       <h1 style={{ fontSize: 26, margin: "14px 0 6px" }}>Integration guides</h1>
       <p style={{ fontSize: 14, color: "#64748b", marginBottom: 24, lineHeight: 1.6 }}>
         Third-party services — email, payments, AI, files — all set up the same way.
@@ -1041,7 +1221,7 @@ function AdminPage() {
 
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", padding: "40px 20px" }}>
-      <a href="/" style={{ fontSize: 13, color: "#8a6d2b", textDecoration: "none" }}>← Back to app</a>
+      <a href="/" style={{ fontSize: 13, color: "#2f6bff", textDecoration: "none" }}>← Back to app</a>
       <h1 style={{ fontSize: 24, margin: "14px 0 18px" }}>Admin</h1>
       {err && <p style={{ color: "#b91c1c" }}>{err}</p>}
 

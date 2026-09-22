@@ -1,0 +1,215 @@
+<!doctype html><html><head><meta charset="utf-8"><title>R5 — Edu dashboard shell + blue journey</title>
+<style>
+*{box-sizing:border-box;margin:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+body{display:flex;min-height:100vh;background:#f2f6fd;color:#16233f}
+
+/* ---------- left nav (R4 chrome, blue palette) ---------- */
+.side{width:212px;background:#fff;border-right:1px solid #dfe9f7;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:18px 12px}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16.5px;padding:2px 10px 20px}
+.logo .dot{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#5b8cff,#2f6bff);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+.nv{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:500;color:#5b6b8c;cursor:pointer;margin-bottom:2px;position:relative}
+.nv:hover{background:#f5f8fd}
+.nv.on{background:#eaf2ff;color:#2f6bff;font-weight:600}
+.nv.on::before{content:"";position:absolute;left:-12px;top:6px;bottom:6px;width:4px;border-radius:2px;background:#2f6bff}
+.nv .ico{width:18px;text-align:center;font-size:14px;opacity:.85}
+.nl{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:#a3aec4;padding:14px 12px 5px}
+.sub-nv{display:flex;align-items:center;gap:9px;padding:7px 12px 7px 34px;border-radius:8px;font-size:12.5px;color:#5b6b8c;cursor:pointer}
+.sub-nv:hover{background:#f5f8fd}
+.sub-nv.on{color:#2f6bff;font-weight:600;background:#eaf2ff}
+.sub-nv .d{width:16px;height:16px;border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;background:#eef1f6;color:#64748b;flex-shrink:0}
+.sub-nv.done .d{background:#16a34a;color:#fff}
+.sub-nv.now .d{background:#2f6bff;color:#fff}
+.upg{margin-top:auto;background:#f8faff;border:1px solid #e7edfb;border-radius:14px;padding:18px 16px;text-align:center}
+.upg .star{width:40px;height:40px;border-radius:50%;background:#eaf2ff;color:#2f6bff;display:flex;align-items:center;justify-content:center;font-size:17px;margin:0 auto 10px}
+.upg b{font-size:13.5px;display:block}
+.upg p{font-size:11.5px;color:#8a97b5;margin:4px 0 12px}
+.upg button{background:#16233f;color:#fff;border:none;border-radius:8px;padding:8px 22px;font-size:12px;font-weight:800;letter-spacing:.04em;cursor:pointer}
+.upg button span{color:#5b8cff}
+
+/* ---------- main ---------- */
+.main{flex:1;min-width:0}
+.head{display:flex;align-items:center;gap:16px;padding:22px 30px 0}
+.head h1{font-size:20px;font-weight:700}
+.head .sub{font-size:12.5px;color:#7d8fb0;margin-top:3px}
+.head .act{margin-left:auto;display:flex;align-items:center;gap:12px}
+.btn-p{background:#2f6bff;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px}
+.cred{font-size:12px;font-weight:700;color:#2f6bff;background:#eaf2ff;border:1px solid #cfe1ff;border-radius:999px;padding:6px 13px}
+.user{display:flex;align-items:center;gap:9px}
+.user .av{width:36px;height:36px;border-radius:50%;background:#16233f;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.user .nm{font-size:12.5px;font-weight:600;line-height:1.2}
+.user .rl{font-size:10.5px;color:#7d8fb0}
+
+/* two-column body: journey center + info rail */
+.body{display:flex;gap:24px;padding:26px 30px 60px;align-items:flex-start}
+.journey{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;position:relative;max-width:620px;margin:0 auto}
+.journey::before{content:"";position:absolute;top:6px;bottom:0;left:50%;width:4px;background:#dbe7f7;border-radius:2px;transform:translateX(-50%)}
+.node{width:100%;max-width:520px;display:flex;align-items:center;gap:16px;padding:14px 0;position:relative;z-index:1}
+.node:nth-child(even){flex-direction:row-reverse;text-align:right}
+.node:nth-child(even) .nbody{align-items:flex-end}
+.nc{width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;background:#fff;border:3px solid #dbe7f7;color:#7d8fb0}
+.node.done .nc{background:#16a34a;border-color:#16a34a;color:#fff}
+.node.now .nc{background:#2f6bff;border-color:#2f6bff;color:#fff;box-shadow:0 0 0 7px rgba(47,107,255,.16)}
+.node.locked .nc{background:#eef4fc}
+.nbody{display:flex;flex-direction:column;gap:2px}
+.nbody b{font-size:14.5px}
+.nbody span{font-size:12px;color:#7d8fb0}
+.node.locked{opacity:.55}
+.node .tag{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2f6bff}
+.node.done .tag{color:#16a34a}
+
+/* the open stage card on the path (R3b inside R4) */
+.stage-card{width:100%;max-width:560px;background:#fff;border:1px solid #dbe7f7;border-radius:18px;padding:26px 28px;box-shadow:0 12px 40px rgba(47,107,255,.12);position:relative;z-index:1;margin:8px 0}
+.stage-card .eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#2f6bff}
+.stage-card h2{font-size:22px;font-weight:800;margin:4px 0 6px}
+.stage-card .plain{font-size:14.5px;color:#4d5f82;line-height:1.6}
+.stage-card .gate{margin-top:12px;font-size:12.5px;color:#7d8fb0;border-top:1px solid #e8f0fb;padding-top:12px}
+.stage-card .gate b{color:#4d5f82}
+
+.mentor-row{display:flex;gap:11px;align-items:flex-start;margin-top:18px}
+.mentor-row .mav{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5b8cff,#2f6bff);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px;flex-shrink:0}
+.mentor-bub{background:#eaf2ff;border:1px solid #cfe1ff;border-radius:14px;border-top-left-radius:4px;padding:11px 15px;font-size:13.5px;line-height:1.6;color:#1e3a6e}
+.you-bub{background:#16233f;color:#fff;border-radius:14px;border-top-right-radius:4px;padding:11px 15px;font-size:13.5px;line-height:1.6;margin:10px 0 0 47px;max-width:88%}
+.reply{margin:14px 0 0 47px;display:flex;gap:9px}
+.reply input{flex:1;padding:11px 14px;border:1px solid #cfe1ff;border-radius:11px;font-size:13.5px;background:#fbfdff}
+.reply button{background:#2f6bff;color:#fff;border:none;border-radius:11px;padding:0 17px;font-weight:800;font-size:13px;cursor:pointer}
+.draft{margin:10px 0 0 47px;font-size:12px;color:#2f6bff;font-weight:600;background:none;border:none;cursor:pointer;padding:0}
+.draft:hover{text-decoration:underline}
+
+.qblock{margin-top:22px;border-top:1px dashed #cfe1ff;padding-top:18px}
+.qmeta{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.qmeta .qn{font-size:11px;font-weight:700;color:#7d8fb0}
+.qmeta .dots{display:flex;gap:4px}
+.qmeta .dots i{width:18px;height:4px;border-radius:2px;background:#e2e8f2}
+.qmeta .dots i.d{background:#16a34a}.qmeta .dots i.n{background:#2f6bff}
+.qask{font-size:16.5px;font-weight:800;line-height:1.4;margin-bottom:5px}
+.qex{font-size:12.5px;color:#7d8fb0;line-height:1.6;margin-bottom:12px}
+textarea{width:100%;min-height:88px;border:1px solid #cfe1ff;border-radius:11px;padding:12px 14px;font-size:14px;font-family:inherit;resize:vertical;background:#fbfdff;line-height:1.55}
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.next{background:#2f6bff;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;cursor:pointer}
+.back{background:none;border:none;color:#a3b6d4;font-size:12.5px;cursor:pointer}
+
+/* right rail (R4 cards, blue) */
+.rail2{width:272px;flex-shrink:0;display:flex;flex-direction:column;gap:14px}
+.rcard{background:#fff;border:1px solid #e0e9f7;border-radius:14px;padding:18px 20px}
+.rcard h3{font-size:13px;font-weight:700;margin-bottom:10px}
+.rcard .it{display:flex;gap:9px;padding:7px 0;font-size:12.5px;color:#5b6b8c;line-height:1.5;cursor:pointer;border-bottom:1px solid #f4f7fc}
+.rcard .it:last-child{border:none}
+.rcard .it::before{content:"⚠";font-size:11px}
+.rcard.gate{background:#eaf2ff;border-color:#cfe1ff}
+.rcard.gate p{font-size:12.5px;color:#3d5aa8;line-height:1.6}
+.score{display:flex;align-items:center;gap:13px}
+.score .n{width:44px;height:44px;border-radius:50%;background:#eaf2ff;border:2px solid #5b8cff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#2f6bff}
+.score b{font-size:13px;display:block}
+.score span{font-size:11.5px;color:#7d8fb0}
+.rcard .mini{width:100%;margin-top:10px;background:#fff;border:1px solid #dbe4f5;border-radius:8px;padding:8px;font-size:12px;font-weight:600;color:#475569;cursor:pointer}
+.rcard .why{font-size:12.5px;color:#5b6b8c;line-height:1.6}
+
+@media (max-width:1100px){.rail2{display:none}}
+</style></head><body>
+
+<aside class="side">
+  <div class="logo"><span class="dot">A</span>AppPilot</div>
+  <div class="nv"><span class="ico">▦</span>Dashboard</div>
+  <div class="nv on"><span class="ico">▤</span>DogWalkr</div>
+  <div class="sub-nv done"><span class="d">✓</span>Define</div>
+  <div class="sub-nv now on"><span class="d">2</span>Architect</div>
+  <div class="sub-nv"><span class="d">3</span>Foundation</div>
+  <div class="sub-nv"><span class="d">4</span>First Slice</div>
+  <div class="sub-nv"><span class="d">5</span>Features</div>
+  <div class="sub-nv"><span class="d">6</span>Harden</div>
+  <div class="sub-nv"><span class="d">7</span>Launch</div>
+  <div class="nl">Help</div>
+  <div class="nv"><span class="ico">✓</span>App check</div>
+  <div class="nv"><span class="ico">?</span>Guides</div>
+  <div class="nv"><span class="ico">✉</span>Feedback</div>
+  <div class="nv"><span class="ico">⚙</span>My account</div>
+  <div class="upg">
+    <div class="star">★</div>
+    <b>Upgrade your plan</b>
+    <p>Unlock all 7 stages + unlimited mentor</p>
+    <button>GO <span>PRO</span></button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="head">
+    <div>
+      <h1>Good Afternoon, Stuart 👋</h1>
+      <div class="sub">Your build journey — 1 of 7 stages complete</div>
+    </div>
+    <div class="act">
+      <button class="btn-p">New Build ＋</button>
+      <span class="cred">14 credits</span>
+      <div class="user"><span class="av">SG</span><div><div class="nm">Stuart G.</div><div class="rl">Free plan</div></div></div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="journey">
+      <div class="node done"><div class="nc">✓</div>
+        <div class="nbody"><span class="tag">Passed</span><b>Define</b><span>what, who, what NOT</span></div></div>
+
+      <div class="stage-card">
+        <div class="eyebrow">Stage 2 — you're here</div>
+        <h2>Architect</h2>
+        <p class="plain">Decide only the things that are expensive to change later: who can see whose data, where secrets live, what it talks to.</p>
+        <div class="gate"><b>To pass:</b> every decision written down with its reason.</div>
+
+        <div class="mentor-row">
+          <div class="mav">M</div>
+          <div class="mentor-bub">Two strangers both use DogWalkr — should either ever see the other's clients?</div>
+        </div>
+        <div class="you-bub">No way — that would be a disaster.</div>
+        <div class="mentor-row" style="margin-top:10px">
+          <div class="mav">M</div>
+          <div class="mentor-bub">Exactly — every record needs an owner tag. ✍️ I wrote that into Question 1. Next: what does your app need passwords or keys for?</div>
+        </div>
+        <div class="reply"><input placeholder="Answer the mentor…"><button>→</button></div>
+        <button class="draft">✨ Fill in my answers from this chat</button>
+
+        <div class="qblock">
+          <div class="qmeta"><span class="qn">QUESTION 2 OF 4</span>
+            <span class="dots"><i class="d"></i><i class="n"></i><i></i><i></i><i></i></span></div>
+          <div class="qask">What does your app need passwords or keys for?</div>
+          <div class="qex">Just list them — your builder stores these as 'environment variables', never in the code.</div>
+          <textarea placeholder="Keys/passwords for: ___"></textarea>
+          <div class="qnav"><button class="back">← Back</button><button class="next">Next →</button></div>
+        </div>
+      </div>
+
+      <div class="node locked"><div class="nc">3</div>
+        <div class="nbody"><span class="tag">Next up</span><b>Foundation</b><span>repo, deploy, live URL</span></div></div>
+      <div class="node locked"><div class="nc">4</div>
+        <div class="nbody"><b>First Slice</b><span>one real feature end to end</span></div></div>
+      <div class="node locked"><div class="nc">5</div>
+        <div class="nbody"><b>Feature Slices</b><span>the rest, one thin slice at a time</span></div></div>
+      <div class="node locked"><div class="nc">6</div>
+        <div class="nbody"><b>Harden</b><span>safe for strangers</span></div></div>
+      <div class="node locked"><div class="nc">🚀</div>
+        <div class="nbody"><b>Launch</b><span>one friendly human uses it</span></div></div>
+    </div>
+
+    <div class="rail2">
+      <div class="rcard gate">
+        <h3>To pass this stage</h3>
+        <p>Every decision is written down with its reason — and you know what happens if each one turns out wrong.</p>
+      </div>
+      <div class="rcard">
+        <h3>Traps novices hit here</h3>
+        <div class="it">Copying architecture from a tutorial or a bigger app</div>
+        <div class="it">Secrets ending up in code 'temporarily'</div>
+        <div class="it">Bolting auth on later</div>
+      </div>
+      <div class="rcard">
+        <h3>App check</h3>
+        <div class="score"><span class="n">5/7</span><div><b>dogwalkr.onrender.com</b><span>2 warnings — see report</span></div></div>
+        <button class="mini">Open report</button>
+      </div>
+      <div class="rcard">
+        <h3>Why this stage matters</h3>
+        <p class="why">Get these wrong and you pay forever; get them right and everything else is fast and loose.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

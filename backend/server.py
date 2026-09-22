@@ -20,11 +20,13 @@ from utils.auth import get_current_user  # noqa: E402
 
 from routes import admin as admin_routes  # noqa: E402
 from routes import auth as auth_routes  # noqa: E402
+from routes import checks as check_routes  # noqa: E402
 from routes import mentor as mentor_routes  # noqa: E402
 from routes import projects as project_routes  # noqa: E402
 
 app.include_router(admin_routes.router)
 app.include_router(auth_routes.router)
+app.include_router(check_routes.router)
 app.include_router(mentor_routes.router)
 app.include_router(project_routes.router)
 

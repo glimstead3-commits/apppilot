@@ -1,0 +1,141 @@
+<!doctype html><html><head><meta charset="utf-8"><title>R1 — Focus: one calm column</title>
+<style>
+*{box-sizing:border-box;margin:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+body{background:#fafbfe;color:#17203a;min-height:100vh}
+
+/* slim top bar — no sidebar, nothing competing for attention */
+.top{position:sticky;top:0;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);
+  border-bottom:1px solid #eceff5;display:flex;align-items:center;gap:14px;padding:0 28px;height:58px;z-index:5}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px}
+.dot{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#f4c95d,#e0a71f);
+  display:flex;align-items:center;justify-content:center;color:#17203a;font-size:14px}
+.crumb{color:#94a3b8;font-size:13px}
+.crumb b{color:#334155}
+.right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.cred{font-size:12px;font-weight:700;color:#8a6d2b;background:#fdf6e3;border:1px solid #e8d48b;border-radius:999px;padding:5px 12px}
+.av{width:30px;height:30px;border-radius:50%;background:#17203a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+
+/* journey stepper */
+.steps{max-width:720px;margin:30px auto 0;padding:0 24px;display:flex;gap:6px}
+.st{flex:1;text-align:center}
+.st .bar{height:4px;border-radius:2px;background:#e5eaf2;margin-bottom:7px}
+.st.done .bar{background:#16a34a}
+.st.now .bar{background:#f4c95d}
+.st span{font-size:11px;color:#94a3b8}
+.st.now span{color:#8a6d2b;font-weight:700}
+.st.done span{color:#16a34a}
+
+.wrap{max-width:680px;margin:0 auto;padding:36px 24px 80px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a6d2b}
+h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:6px 0 10px}
+.plain{font-size:16.5px;color:#334155;line-height:1.65}
+.gate{margin-top:14px;font-size:13.5px;color:#64748b;background:#f6f8fc;border:1px solid #e8ecf4;border-radius:10px;padding:12px 16px;line-height:1.55}
+.gate b{color:#475569}
+
+details{margin-top:12px;border:1px solid #e8ecf4;border-radius:10px;background:#fff}
+details summary{padding:13px 18px;font-size:13.5px;font-weight:600;color:#475569;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"▸";margin-left:auto;color:#94a3b8;transition:transform .15s}
+details[open] summary::after{transform:rotate(90deg)}
+details .b{padding:0 18px 16px;font-size:13.5px;color:#475569;line-height:1.7}
+details.warn{background:#fffbeb;border-color:#fde68a}
+details.warn summary,details.warn .b{color:#92400e}
+
+h2{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin:44px 0 16px;display:flex;align-items:center;gap:12px}
+h2::after{content:"";flex:1;height:1px;background:#e8ecf4}
+
+/* mentor — reads like a conversation, not a widget */
+.chat{display:flex;flex-direction:column;gap:12px}
+.bub{max-width:88%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.6}
+.bub.ai{background:#fff;border:1px solid #e8ecf4;align-self:flex-start;border-bottom-left-radius:4px}
+.bub.me{background:#17203a;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.bub .who{display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a6d2b;margin-bottom:4px}
+.bub.me .who{color:#f4c95d}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.chip{font-size:12.5px;background:#fff;border:1px solid #d9e2f2;color:#475569;border-radius:999px;padding:6px 13px;cursor:pointer}
+.chip:hover{border-color:#b9c8e8;background:#f6f9ff}
+.reply{display:flex;gap:10px;margin-top:14px}
+.reply input{flex:1;padding:13px 16px;border:1px solid #dbe2ee;border-radius:12px;font-size:14.5px}
+.reply button{background:#17203a;color:#fff;border:none;border-radius:12px;padding:0 22px;font-weight:700;font-size:14px;cursor:pointer}
+.draft{margin-top:10px;background:#fdf6e3;border:1px solid #e8d48b;color:#8a6d2b;border-radius:10px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer}
+
+/* the question — ONE at a time, big */
+.qcard{background:#fff;border:1px solid #e8ecf4;border-radius:16px;padding:30px 32px;box-shadow:0 1px 4px rgba(23,32,58,.05)}
+.qmeta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.qmeta .qn{font-size:12px;font-weight:700;color:#64748b}
+.qmeta .dots{display:flex;gap:5px}
+.qmeta .dots i{width:20px;height:5px;border-radius:3px;background:#e5eaf2}
+.qmeta .dots i.d{background:#16a34a}.qmeta .dots i.n{background:#f4c95d}
+.qask{font-size:19px;font-weight:800;line-height:1.4;margin-bottom:8px}
+.qex{font-size:14px;color:#64748b;line-height:1.65;margin-bottom:14px}
+.qexx{background:#eef4ff;border:1px solid #c7d7fe;border-radius:10px;padding:12px 16px;font-size:13.5px;color:#3730a3;line-height:1.6;margin-bottom:16px}
+textarea{width:100%;min-height:110px;border:1px solid #dbe2ee;border-radius:12px;padding:14px 16px;font-size:15px;font-family:inherit;resize:vertical;line-height:1.55}
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+.back{background:none;border:none;color:#94a3b8;font-size:13px;cursor:pointer}
+.next{background:#17203a;color:#fff;border:none;border-radius:10px;padding:11px 24px;font-weight:700;font-size:14px;cursor:pointer}
+
+/* app check strip — verification visible at a glance */
+.check{background:#fff;border:1px solid #e8ecf4;border-radius:16px;padding:22px 24px;display:flex;align-items:center;gap:18px}
+.check .score{width:52px;height:52px;border-radius:50%;background:#fff7e0;border:2px solid #f4c95d;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#8a6d2b;flex-shrink:0}
+.check .ct b{font-size:15px;display:block}
+.check .ct span{font-size:13px;color:#64748b}
+.check button{margin-left:auto;background:#fff;border:1px solid #cbd5e1;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;color:#475569;cursor:pointer}
+</style></head><body>
+
+<div class="top">
+  <div class="logo"><span class="dot">A</span>AppPilot</div>
+  <span class="crumb">/ <b>DogWalkr</b> / Stage 2</span>
+  <div class="right"><span class="cred">14 credits</span><span class="av">SG</span></div>
+</div>
+
+<div class="steps">
+  <div class="st done"><div class="bar"></div><span>Define</span></div>
+  <div class="st now"><div class="bar"></div><span>Architect</span></div>
+  <div class="st"><div class="bar"></div><span>Foundation</span></div>
+  <div class="st"><div class="bar"></div><span>Slice</span></div>
+  <div class="st"><div class="bar"></div><span>Features</span></div>
+  <div class="st"><div class="bar"></div><span>Harden</span></div>
+  <div class="st"><div class="bar"></div><span>Launch</span></div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow">Stage 2 of 7</div>
+  <h1>Architect</h1>
+  <p class="plain">Decide only the things that are expensive to change later: who can see whose data, where secrets live, what it talks to.</p>
+  <div class="gate"><b>To pass:</b> Every decision is written down with its reason — and you know what happens if each one turns out wrong.</div>
+
+  <details><summary>Why this stage matters</summary>
+    <div class="b">Get these wrong and you pay forever; get them right and everything else is fast and loose.</div></details>
+  <details class="warn"><summary>⚠ 3 traps novices hit here</summary>
+    <div class="b"><b>Copying architecture from a tutorial.</b> The CRM needed a separate database per customer — it stores children's data. This app uses one shared DB with user_id tags. Isolation is a per-app decision, not a religion.<br><br>
+    <b>Secrets ending up in code 'temporarily'.</b> API keys pasted into source get scraped by bots within minutes of pushing to GitHub. Env vars from line one, always.</div></details>
+
+  <h2>Step 1 · Talk it through</h2>
+  <div class="chat">
+    <div class="bub ai"><span class="who">Mentor</span>Two strangers both use DogWalkr — should either ever see the other's clients?</div>
+    <div class="bub me"><span class="who">You</span>No way — that would be a disaster. One walker seeing another's client list.</div>
+    <div class="bub ai"><span class="who">Mentor</span>Exactly — so every record needs an owner tag. Write that down as your first decision. Now: what does your app need passwords or keys for?</div>
+  </div>
+  <div class="chips"><button class="chip">What's a secret, exactly?</button><button class="chip">I don't know — you tell me</button></div>
+  <div class="reply"><input placeholder="Answer the mentor…"><button>Send</button></div>
+  <button class="draft">✨ Fill in my answers from this chat</button>
+
+  <h2>Step 2 · Write it down</h2>
+  <div class="qcard">
+    <div class="qmeta"><span class="qn">QUESTION 2 OF 4</span>
+      <span class="dots"><i class="d"></i><i class="n"></i><i></i><i></i><i></i></span></div>
+    <div class="qask">What does your app need passwords or keys for?</div>
+    <div class="qex">Just list them — your builder stores these as 'environment variables', never in the code.</div>
+    <div class="qexx">💡 <b>A real answer looks like:</b> 'AI key for the mentor, email key for sending, database password.'</div>
+    <textarea placeholder="Keys/passwords for: ___"></textarea>
+    <div class="qnav"><button class="back">← Back</button><button class="next">Next →</button></div>
+  </div>
+
+  <h2>Anytime · Check the real app</h2>
+  <div class="check">
+    <div class="score">5/7</div>
+    <div class="ct"><b>dogwalkr.onrender.com</b><span>2 warnings — missing security headers, http doesn't forward</span></div>
+    <button>Open report</button>
+  </div>
+</div>
+</body></html>

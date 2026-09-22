@@ -26,6 +26,8 @@ definition and architecture decisions (it follows
 - Build: `cd frontend && npm install && npx vite build && cd ../backend && pip install -r requirements.txt`
 - Start: `cd backend && uvicorn server:app --host 0.0.0.0 --port $PORT`
 - Env vars: `MONGO_URL`, `DB_NAME=apppilot` (later: `AI_API_KEY`, `JWT_SECRET`)
+- Local dev only: `DEV_ALL_ACCESS=1` unlocks plan gates + credit checks for
+  every account — never set it in production
 
 ## Rules
 

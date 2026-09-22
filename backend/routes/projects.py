@@ -5,7 +5,7 @@ from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from utils.auth import get_current_user
+from utils.auth import DEV_ALL_ACCESS, get_current_user
 from utils.database import get_db
 
 router = APIRouter(prefix="/api/projects")
@@ -44,6 +44,8 @@ def _public(p: dict) -> dict:
         "name": p.get("name", ""),
         "stages": p.get("stages", {}),
         "current_stage": p.get("current_stage", 0),
+        "app_url": p.get("app_url", ""),
+        "last_check": p.get("last_check"),
         "created_at": p.get("created_at"),
     }
 
@@ -102,7 +104,7 @@ def save_stage(project_id: str, stage_key: str, body: StageAnswers,
     stage = by_key[stage_key]
     if stage["order"] > p.get("current_stage", 0):
         raise HTTPException(status_code=403, detail="Complete earlier stages first")
-    if user.get("plan") == "free" and stage["order"] >= FREE_STAGE_LIMIT:
+    if not DEV_ALL_ACCESS and user.get("plan") == "free" and stage["order"] >= FREE_STAGE_LIMIT:
         raise HTTPException(
             status_code=402,
             detail="Free plan covers Define & Architect — upgrade to unlock the full journey",

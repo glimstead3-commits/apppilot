@@ -1,0 +1,247 @@
+<!doctype html><html><head><meta charset="utf-8"><title>R4 — Edu dashboard (PathShala-style)</title>
+<style>
+*{box-sizing:border-box;margin:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+body{display:flex;min-height:100vh;background:#f5f7fb;color:#1e2a44}
+
+/* ---------- left nav ---------- */
+.side{width:212px;background:#fff;border-right:1px solid #edf0f7;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:18px 12px}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16.5px;padding:2px 10px 20px}
+.logo .dot{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#f4c95d,#e0a71f);display:flex;align-items:center;justify-content:center;color:#17203a;font-size:14px}
+.nv{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;font-size:13.5px;font-weight:500;color:#5b6b8c;cursor:pointer;margin-bottom:2px;position:relative}
+.nv:hover{background:#f5f7fc}
+.nv.on{background:#eef3ff;color:#2f6bff;font-weight:600}
+.nv.on::before{content:"";position:absolute;left:-12px;top:6px;bottom:6px;width:4px;border-radius:2px;background:#2f6bff}
+.nv .ico{width:18px;text-align:center;font-size:14px;color:inherit;opacity:.85}
+.nl{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:#a3aec4;padding:14px 12px 5px}
+.sub-nv{display:flex;align-items:center;gap:9px;padding:7px 12px 7px 34px;border-radius:8px;font-size:12.5px;color:#5b6b8c;cursor:pointer}
+.sub-nv:hover{background:#f5f7fc}
+.sub-nv.on{color:#2f6bff;font-weight:600;background:#eef3ff}
+.sub-nv .d{width:16px;height:16px;border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;background:#eef1f6;color:#64748b;flex-shrink:0}
+.sub-nv.done .d{background:#16a34a;color:#fff}
+.sub-nv.now .d{background:#f4c95d;color:#17203a}
+.upg{margin-top:auto;background:#f8faff;border:1px solid #e7edfb;border-radius:14px;padding:18px 16px;text-align:center}
+.upg .star{width:40px;height:40px;border-radius:50%;background:#eef3ff;color:#2f6bff;display:flex;align-items:center;justify-content:center;font-size:17px;margin:0 auto 10px}
+.upg b{font-size:13.5px;display:block}
+.upg p{font-size:11.5px;color:#8a97b5;margin:4px 0 12px}
+.upg button{background:#17203a;color:#fff;border:none;border-radius:8px;padding:8px 22px;font-size:12px;font-weight:800;letter-spacing:.04em;cursor:pointer}
+.upg button span{color:#f4c95d}
+
+/* ---------- main ---------- */
+.main{flex:1;min-width:0}
+.head{display:flex;align-items:center;gap:16px;padding:22px 30px 0}
+.head h1{font-size:20px;font-weight:700}
+.head h1 .wave{font-size:18px}
+.head .sub{font-size:12.5px;color:#8a97b5;margin-top:3px}
+.head .act{margin-left:auto;display:flex;align-items:center;gap:12px}
+.btn-p{background:#2f6bff;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px}
+.ib{width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid #e7ecf5;display:flex;align-items:center;justify-content:center;color:#5b6b8c;font-size:14px;position:relative;cursor:pointer}
+.ib .bdg{position:absolute;top:-2px;right:-2px;width:14px;height:14px;border-radius:50%;background:#f43f5e;color:#fff;font-size:8.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.user{display:flex;align-items:center;gap:9px}
+.user .av{width:36px;height:36px;border-radius:50%;background:#17203a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.user .nm{font-size:12.5px;font-weight:600;line-height:1.2}
+.user .rl{font-size:10.5px;color:#8a97b5}
+
+/* tabs row */
+.tabs{display:flex;align-items:center;gap:26px;padding:18px 30px 0;border-bottom:1px solid #e7ecf5;margin:0 0 0 0}
+.tab{font-size:13.5px;font-weight:500;color:#8a97b5;padding:12px 2px;cursor:pointer;position:relative;display:flex;align-items:center;gap:7px}
+.tab.on{color:#1e2a44;font-weight:700}
+.tab.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:2px 2px 0 0;background:#2f6bff}
+.tab .cnt{background:#f43f5e;color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:2px 7px}
+.sel{margin-left:auto;background:#fff;border:1px solid #e2e8f2;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer;display:flex;align-items:center;gap:8px}
+
+/* two-column body */
+.body{display:flex;gap:22px;padding:24px 30px 40px;align-items:flex-start}
+.feed{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+.rail2{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:14px}
+
+/* feed cards */
+.qcard{background:#fff;border:1px solid #e9edf5;border-radius:14px;padding:18px 20px}
+.qtop{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.qtop .av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.qtop .av.m{background:linear-gradient(135deg,#f4c95d,#e0a71f);color:#17203a}
+.qtop .av.q{background:#eef3ff;color:#2f6bff}
+.qtop .who b{font-size:13px;display:block}
+.qtop .who span{font-size:11px;color:#8a97b5}
+.qtop .st{margin-left:auto;font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 10px}
+.qtop .st.g{background:#e8f7ee;color:#15803d}
+.qtop .st.y{background:#fdf6e3;color:#8a6d2b}
+.qtxt{font-size:13.5px;font-weight:600;color:#1e2a44;line-height:1.55;margin-bottom:4px}
+.qex{font-size:12.5px;color:#8a97b5;line-height:1.55;margin-bottom:10px}
+.ansr{display:flex;align-items:center;gap:10px;background:#f5f7fc;border:1px solid #e9edf5;border-radius:10px;padding:10px 14px}
+.ansr .av2{width:24px;height:24px;border-radius:50%;background:#17203a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.ansr input{flex:1;background:none;border:none;outline:none;font-size:13px;color:#1e2a44}
+.ansr input::placeholder{color:#a3aec4}
+.ansr button{background:none;border:none;color:#2f6bff;font-weight:700;font-size:12.5px;cursor:pointer}
+.saved{display:flex;gap:10px;align-items:flex-start;background:#f0fdf4;border:1px solid #d3f0dd;border-radius:10px;padding:10px 14px;font-size:13px;color:#166534;line-height:1.5}
+.saved b{color:#15803d}
+.thread{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+.mb{max-width:92%;padding:9px 13px;border-radius:12px;font-size:12.5px;line-height:1.55}
+.mb.ai{background:#f1f5f9;align-self:flex-start}
+.mb.me{background:#17203a;color:#fff;align-self:flex-end}
+.draft{margin-top:10px;font-size:12px;color:#8a6d2b;font-weight:600;background:none;border:none;cursor:pointer;padding:0}
+.draft:hover{text-decoration:underline}
+
+/* checklist card */
+.cl label{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#475569;padding:7px 0;cursor:pointer;line-height:1.5}
+.cl input{margin-top:3px}
+
+/* save bar */
+.savebar{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e9edf5;border-radius:14px;padding:14px 20px}
+.savebar .pg{display:flex;gap:5px;align-items:center;font-size:12px;color:#8a97b5;font-weight:600}
+.savebar .pg i{width:8px;height:8px;border-radius:50%;background:#e2e8f2}
+.savebar .pg i.d{background:#16a34a}
+.savebar button{background:#17203a;color:#fff;border:none;border-radius:9px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer}
+
+/* right rail cards */
+.rcard{background:#fff;border:1px solid #e9edf5;border-radius:14px;padding:18px 20px}
+.rcard h3{font-size:13.5px;font-weight:700;margin-bottom:12px}
+.rcard .it{display:flex;gap:9px;padding:7px 0;font-size:12.5px;color:#5b6b8c;line-height:1.5;cursor:pointer;border-bottom:1px solid #f4f6fa}
+.rcard .it:last-child{border:none}
+.rcard .it::before{content:"⚠";font-size:11px}
+.rcard.gate{background:#eef3ff;border-color:#d7e3ff}
+.rcard.gate p{font-size:12.5px;color:#3d5aa8;line-height:1.6}
+.score{display:flex;align-items:center;gap:13px}
+.score .n{width:46px;height:46px;border-radius:50%;background:#fff7e0;border:2px solid #f4c95d;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#8a6d2b}
+.score b{font-size:13px;display:block}
+.score span{font-size:11.5px;color:#8a97b5}
+.rcard .mini{width:100%;margin-top:10px;background:#fff;border:1px solid #e2e8f2;border-radius:8px;padding:8px;font-size:12px;font-weight:600;color:#475569;cursor:pointer}
+</style></head><body>
+
+<aside class="side">
+  <div class="logo"><span class="dot">A</span>AppPilot</div>
+  <div class="nv"><span class="ico">▦</span>Dashboard</div>
+  <div class="nv on"><span class="ico">▤</span>DogWalkr</div>
+  <div class="sub-nv done"><span class="d">✓</span>Define</div>
+  <div class="sub-nv now on"><span class="d">2</span>Architect</div>
+  <div class="sub-nv"><span class="d">3</span>Foundation</div>
+  <div class="sub-nv"><span class="d">4</span>First Slice</div>
+  <div class="sub-nv"><span class="d">5</span>Features</div>
+  <div class="sub-nv"><span class="d">6</span>Harden</div>
+  <div class="sub-nv"><span class="d">7</span>Launch</div>
+  <div class="nl">Help</div>
+  <div class="nv"><span class="ico">✓</span>App check</div>
+  <div class="nv"><span class="ico">?</span>Guides</div>
+  <div class="nv"><span class="ico">✉</span>Feedback</div>
+  <div class="nv"><span class="ico">⚙</span>My account</div>
+  <div class="upg">
+    <div class="star">★</div>
+    <b>Upgrade your plan</b>
+    <p>Unlock all 7 stages + unlimited mentor</p>
+    <button>GO <span>PRO</span></button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="head">
+    <div>
+      <h1>Good Afternoon, Stuart <span class="wave">👋</span></h1>
+      <div class="sub">Track, manage and build your app — one stage at a time</div>
+    </div>
+    <div class="act">
+      <button class="btn-p">New Build <span>＋</span></button>
+      <div class="ib">◔<span class="bdg">3</span></div>
+      <div class="ib">✉<span class="bdg">2</span></div>
+      <div class="user"><span class="av">SG</span><div><div class="nm">Stuart G.</div><div class="rl">Free plan · 14 cr</div></div></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab">All Questions</div>
+    <div class="tab">Answered</div>
+    <div class="tab on">Unanswered <span class="cnt">2</span></div>
+    <button class="sel">Stage 2 · Architect ▾</button>
+  </div>
+
+  <div class="body">
+    <div class="feed">
+
+      <!-- mentor card -->
+      <div class="qcard">
+        <div class="qtop">
+          <div class="av m">M</div>
+          <div class="who"><b>Mentor</b><span>Step 1 · talk it through · 1 credit/msg</span></div>
+          <span class="st y">listening</span>
+        </div>
+        <div class="thread">
+          <div class="mb ai">Two strangers both use DogWalkr — should either ever see the other's clients?</div>
+          <div class="mb me">No way — that would be a disaster.</div>
+          <div class="mb ai">Exactly — every record gets an owner tag. Now: what does your app need passwords or keys for?</div>
+        </div>
+        <div class="ansr"><span class="av2">SG</span><input placeholder="Ask the mentor…"><button>Send</button></div>
+        <button class="draft">✨ Fill in my answers from this chat</button>
+      </div>
+
+      <!-- answered question -->
+      <div class="qcard">
+        <div class="qtop">
+          <div class="av q">1</div>
+          <div class="who"><b>Question 1</b><span>answered just now</span></div>
+          <span class="st g">answered</span>
+        </div>
+        <div class="qtxt">Two strangers both use your app. Should either of them ever see the other's stuff?</div>
+        <div class="saved"><b>✓</b> No — worst case would be one walker seeing another's clients. Everything gets an owner tag.</div>
+      </div>
+
+      <!-- current question -->
+      <div class="qcard" style="border-color:#c7d7fe;box-shadow:0 4px 18px rgba(47,107,255,.08)">
+        <div class="qtop">
+          <div class="av q">2</div>
+          <div class="who"><b>Question 2</b><span>your turn</span></div>
+          <span class="st y">unanswered</span>
+        </div>
+        <div class="qtxt">What does your app need passwords or keys for?</div>
+        <div class="qex">Just list them — your builder stores these as 'environment variables', never in the code. 💡 e.g. 'AI key for the mentor, email key, database password.'</div>
+        <div class="ansr"><span class="av2">SG</span><input placeholder="Add an answer — plain words are perfect…"><button>Save</button></div>
+      </div>
+
+      <!-- locked-feel question -->
+      <div class="qcard" style="opacity:.75">
+        <div class="qtop">
+          <div class="av q">3</div>
+          <div class="who"><b>Question 3</b><span>up next</span></div>
+        </div>
+        <div class="qtxt">What does your app need to remember? List the 'things' — like users, bookings, messages.</div>
+        <div class="ansr"><span class="av2">SG</span><input placeholder="Add an answer…"><button>Save</button></div>
+      </div>
+
+      <!-- checklist -->
+      <div class="qcard cl">
+        <div class="qtop">
+          <div class="av q">✓</div>
+          <div class="who"><b>The checklist</b><span>tick when actually true</span></div>
+        </div>
+        <label><input type="checkbox" checked> Every decision is written down with its reason</label>
+        <label><input type="checkbox"> I know what happens if each one turns out wrong</label>
+      </div>
+
+      <div class="savebar">
+        <div class="pg"><i class="d"></i><i class="d"></i><i></i><i></i> 2 of 4 answered</div>
+        <button>Save — finish stage →</button>
+      </div>
+    </div>
+
+    <!-- right rail -->
+    <div class="rail2">
+      <div class="rcard gate">
+        <h3>To pass this stage</h3>
+        <p>Every decision is written down with its reason — and you know what happens if each one turns out wrong.</p>
+      </div>
+      <div class="rcard">
+        <h3>Traps novices hit here</h3>
+        <div class="it">Copying architecture from a tutorial or a bigger app</div>
+        <div class="it">Secrets ending up in code 'temporarily'</div>
+        <div class="it">Bolting auth on later</div>
+      </div>
+      <div class="rcard">
+        <h3>App check</h3>
+        <div class="score"><span class="n">5/7</span><div><b>dogwalkr.onrender.com</b><span>2 warnings — see report</span></div></div>
+        <button class="mini">Open report</button>
+      </div>
+      <div class="rcard">
+        <h3>Why this stage matters</h3>
+        <p style="font-size:12.5px;color:#5b6b8c;line-height:1.6">Get these wrong and you pay forever; get them right and everything else is fast and loose.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

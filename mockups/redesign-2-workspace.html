@@ -1,0 +1,135 @@
+<!doctype html><html><head><meta charset="utf-8"><title>R2 — Workspace: mentor docked beside your work</title>
+<style>
+*{box-sizing:border-box;margin:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+body{display:flex;min-height:100vh;background:#f4f6fa;color:#17203a}
+
+/* left rail — slim, icon-forward */
+.rail{width:64px;background:#10182e;display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:6px;position:sticky;top:0;height:100vh}
+.rail .dot{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#f4c95d,#e0a71f);display:flex;align-items:center;justify-content:center;color:#17203a;font-weight:800;font-size:15px;margin-bottom:14px}
+.ric{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#7e8dab;font-size:16px;cursor:pointer}
+.ric.on{background:rgba(244,201,93,.15);color:#f4c95d}
+.ric:hover{background:rgba(255,255,255,.07);color:#cfd8ea}
+.rail .av{margin-top:auto;width:34px;height:34px;border-radius:50%;background:#f4c95d;color:#17203a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+
+/* stage nav — contextual column */
+.snav{width:210px;background:#fff;border-right:1px solid #e5eaf2;padding:22px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.snav .proj{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;padding:0 10px 12px}
+.snav .proj b{display:block;color:#17203a;font-size:15px;letter-spacing:0;text-transform:none;margin-top:3px}
+.sn{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;color:#334155;cursor:pointer;margin-bottom:2px}
+.sn:hover{background:#f8fafc}
+.sn.on{background:#f1f5fb;font-weight:700}
+.sn .d{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:#eef1f6;color:#64748b}
+.sn.done .d{background:#16a34a;color:#fff}
+.sn.now .d{background:#f4c95d;color:#17203a}
+.sn.locked{opacity:.45}
+.sn.check{margin-top:14px;border-top:1px solid #eef1f6;padding-top:16px}
+.sn.check .d{background:#e8f7ee;color:#15803d}
+
+/* main work column */
+.work{flex:1;min-width:0;padding:34px 40px;max-width:760px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.top h1{font-size:22px}
+.top .sub{color:#64748b;font-size:13px;margin-top:2px}
+.cred{font-size:12px;font-weight:700;color:#8a6d2b;background:#fdf6e3;border:1px solid #e8d48b;border-radius:999px;padding:5px 12px}
+
+.card{background:#fff;border:1px solid #e5eaf2;border-radius:14px;padding:24px 28px;box-shadow:0 1px 3px rgba(23,32,58,.05);margin-bottom:18px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a6d2b}
+.card h2{font-size:18px;font-weight:800;margin:4px 0 8px}
+.card .plain{font-size:14.5px;color:#334155;line-height:1.6}
+.card .gate{margin-top:12px;font-size:13px;color:#64748b;border-top:1px solid #eef1f6;padding-top:12px}
+.tgl{margin-top:12px;font-size:12.5px;color:#8a6d2b;font-weight:600;cursor:pointer}
+
+.qn{font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px}
+.dots{display:flex;gap:5px;margin-bottom:18px}
+.dots i{width:22px;height:5px;border-radius:3px;background:#e5eaf2}
+.dots i.d{background:#16a34a}.dots i.n{background:#f4c95d}
+.qask{font-size:18px;font-weight:800;line-height:1.4;margin-bottom:6px}
+.qex{font-size:13.5px;color:#64748b;line-height:1.6;margin-bottom:12px}
+.qexx{background:#eef4ff;border:1px solid #c7d7fe;border-radius:10px;padding:11px 15px;font-size:13px;color:#3730a3;line-height:1.55;margin-bottom:14px}
+textarea{width:100%;min-height:100px;border:1px solid #dbe2ee;border-radius:10px;padding:12px 14px;font-size:14.5px;font-family:inherit;resize:vertical;line-height:1.55}
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+.back{background:#fff;border:1px solid #cbd5e1;color:#475569;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer}
+.next{background:#17203a;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-weight:700;font-size:13.5px;cursor:pointer}
+
+/* right dock — the mentor, always present */
+.dock{width:360px;flex-shrink:0;background:#fff;border-left:1px solid #e5eaf2;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.dock-h{padding:16px 18px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:10px}
+.dock-h .mav{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#f4c95d,#e0a71f);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#17203a}
+.dock-h b{font-size:14px;display:block}
+.dock-h span{font-size:11.5px;color:#64748b}
+.dock-h .live{margin-left:auto;font-size:10px;font-weight:700;color:#15803d;background:#e8f7ee;border-radius:999px;padding:3px 9px}
+.dock-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+.mb{max-width:92%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.55}
+.mb.ai{background:#f1f5f9;align-self:flex-start;border-bottom-left-radius:4px}
+.mb.me{background:#17203a;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.mb .who{display:block;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a6d2b;margin-bottom:3px}
+.mb.me .who{color:#f4c95d}
+.mb.note{background:#fdf6e3;border:1px solid #e8d48b;color:#8a6d2b;font-size:12px;align-self:stretch;text-align:center;border-radius:10px}
+.draftbtn{margin:0 18px 10px;background:#fdf6e3;border:1px solid #e8d48b;color:#8a6d2b;border-radius:10px;padding:10px;font-size:12.5px;font-weight:700;cursor:pointer}
+.dock-in{padding:14px 18px;border-top:1px solid #eef1f6;display:flex;gap:8px}
+.dock-in input{flex:1;padding:11px 13px;border:1px solid #dbe2ee;border-radius:10px;font-size:13.5px}
+.dock-in button{background:#17203a;color:#fff;border:none;border-radius:10px;padding:0 16px;font-weight:700;font-size:13px;cursor:pointer}
+</style></head><body>
+
+<nav class="rail">
+  <div class="dot">A</div>
+  <div class="ric on">▦</div>
+  <div class="ric">✓</div>
+  <div class="ric">?</div>
+  <div class="ric">✉</div>
+  <div class="av">SG</div>
+</nav>
+
+<nav class="snav">
+  <div class="proj">Project<b>DogWalkr</b></div>
+  <div class="sn done"><span class="d">✓</span>Define</div>
+  <div class="sn now on"><span class="d">2</span>Architect</div>
+  <div class="sn locked"><span class="d">3</span>Foundation</div>
+  <div class="sn locked"><span class="d">4</span>First Slice</div>
+  <div class="sn locked"><span class="d">5</span>Features</div>
+  <div class="sn locked"><span class="d">6</span>Harden</div>
+  <div class="sn locked"><span class="d">7</span>Launch</div>
+  <div class="sn check"><span class="d">✓</span>App check <span style="margin-left:auto;font-size:10px;color:#b45309;font-weight:700">5/7</span></div>
+</nav>
+
+<main class="work">
+  <div class="top">
+    <div><h1>Architect</h1><div class="sub">Stage 2 of 7 — the decisions that cost later</div></div>
+    <span class="cred">14 credits</span>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">This stage</div>
+    <div class="plain">Decide only the things that are expensive to change later: who can see whose data, where secrets live, what it talks to.</div>
+    <div class="gate"><b>To pass:</b> every decision written down with its reason.</div>
+    <div class="tgl">▸ Why it matters · ⚠ 3 traps · worked example</div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="margin-bottom:12px">Question 2 of 4</div>
+    <div class="dots"><i class="d"></i><i class="n"></i><i></i><i></i><i></i></div>
+    <div class="qask">What does your app need passwords or keys for?</div>
+    <div class="qex">Just list them — your builder stores these as 'environment variables', never in the code.</div>
+    <div class="qexx">💡 <b>A real answer looks like:</b> 'AI key for the mentor, email key for sending, database password.'</div>
+    <textarea placeholder="Keys/passwords for: ___"></textarea>
+    <div class="qnav"><button class="back">← Back</button><button class="next">Next →</button></div>
+  </div>
+</main>
+
+<aside class="dock">
+  <div class="dock-h">
+    <span class="mav">M</span>
+    <div><b>Mentor</b><span>on Stage 2 with you</span></div>
+    <span class="live">● online</span>
+  </div>
+  <div class="dock-msgs">
+    <div class="mb ai"><span class="who">Mentor</span>Two strangers both use DogWalkr — should either ever see the other's clients?</div>
+    <div class="mb me"><span class="who">You</span>No way — one walker seeing another's client list would be a disaster.</div>
+    <div class="mb ai"><span class="who">Mentor</span>Exactly — every record needs an owner tag. That's decision one, written down. Next: what does your app need passwords or keys for?</div>
+    <div class="mb note">💡 That answer just filled in Question 1 below — keep going</div>
+    <div class="mb ai"><span class="who">Mentor</span>Think: anything you'd be scared to post publicly. Database password? Email key?</div>
+  </div>
+  <button class="draftbtn">✨ Fill in my answers from this chat</button>
+  <div class="dock-in"><input placeholder="Answer the mentor…"><button>→</button></div>
+</aside>
+</body></html>

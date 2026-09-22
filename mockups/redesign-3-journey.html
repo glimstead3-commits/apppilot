@@ -1,0 +1,123 @@
+<!doctype html><html><head><meta charset="utf-8"><title>R3 — Journey: your app as a path you walk</title>
+<style>
+*{box-sizing:border-box;margin:0;font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+body{background:#fbf8f1;color:#241f15;min-height:100vh}
+
+.top{background:#fff;border-bottom:1px solid #eee5d3;display:flex;align-items:center;gap:14px;padding:0 28px;height:58px}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px}
+.dot{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#f4c95d,#e0a71f);display:flex;align-items:center;justify-content:center;color:#241f15;font-size:14px}
+.right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.cred{font-size:12px;font-weight:700;color:#8a6d2b;background:#fdf6e3;border:1px solid #e8d48b;border-radius:999px;padding:5px 12px}
+.av{width:30px;height:30px;border-radius:50%;background:#241f15;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+
+.hero{max-width:860px;margin:0 auto;padding:34px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.hero h1{font-size:24px}
+.hero .sub{color:#8b8371;font-size:14px;margin-top:3px}
+
+/* the path — stages as stepping stones down the page */
+.path{max-width:860px;margin:26px auto 0;padding:0 24px 90px;display:flex;flex-direction:column;align-items:center;position:relative}
+.path::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:4px;background:#ece3cd;border-radius:2px;transform:translateX(-50%)}
+.node{width:100%;max-width:560px;display:flex;align-items:center;gap:18px;padding:20px 0;position:relative;z-index:1}
+.node:nth-child(even){flex-direction:row-reverse;text-align:right}
+.node:nth-child(even) .nbody{align-items:flex-end}
+.nc{width:56px;height:56px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;background:#fff;border:3px solid #ece3cd;color:#8b8371}
+.node.done .nc{background:#16a34a;border-color:#16a34a;color:#fff}
+.node.now .nc{background:#f4c95d;border-color:#e0a71f;color:#241f15;box-shadow:0 0 0 8px rgba(244,201,93,.25)}
+.node.locked .nc{background:#f5f0e4}
+.nbody{display:flex;flex-direction:column;gap:3px}
+.nbody b{font-size:16px}
+.nbody span{font-size:13px;color:#8b8371}
+.node.locked{opacity:.5}
+.node .tag{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#e0a71f}
+.node.done .tag{color:#16a34a}
+
+/* the open stage — big friendly card on the path */
+.stage-card{max-width:640px;width:100%;background:#fff;border:1px solid #eee5d3;border-radius:20px;padding:30px 34px;box-shadow:0 10px 40px rgba(160,130,40,.10);position:relative;z-index:1;margin:10px 0}
+.stage-card .eyebrow{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#e0a71f}
+.stage-card h2{font-size:24px;font-weight:800;margin:4px 0 8px}
+.stage-card .plain{font-size:15px;color:#5c5544;line-height:1.6}
+.stage-card .gate{margin-top:12px;font-size:13px;color:#8b8371;border-top:1px solid #f2ecdd;padding-top:12px}
+
+/* mentor as a character asking, not a chat widget */
+.mentor-row{display:flex;gap:12px;align-items:flex-start;margin-top:22px}
+.mentor-row .mav{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f4c95d,#e0a71f);display:flex;align-items:center;justify-content:center;font-weight:800;color:#241f15;flex-shrink:0}
+.mentor-bub{background:#fdf6e3;border:1px solid #eddfb4;border-radius:16px;border-top-left-radius:4px;padding:14px 18px;font-size:14.5px;line-height:1.6;color:#4d452f}
+.you-bub{background:#241f15;color:#fff;border-radius:16px;border-top-right-radius:4px;padding:14px 18px;font-size:14.5px;line-height:1.6;margin:12px 0 0 52px;max-width:88%}
+.reply{margin:18px 0 0 52px;display:flex;gap:10px}
+.reply input{flex:1;padding:13px 16px;border:1px solid #e5dcc4;border-radius:12px;font-size:14.5px;background:#fffdf8}
+.reply button{background:#241f15;color:#f4c95d;border:none;border-radius:12px;padding:0 20px;font-weight:800;font-size:14px;cursor:pointer}
+
+.qblock{margin-top:26px;border-top:1px dashed #eadfc3;padding-top:22px}
+.qask{font-size:18px;font-weight:800;line-height:1.4;margin-bottom:6px}
+.qex{font-size:13.5px;color:#8b8371;line-height:1.6;margin-bottom:14px}
+textarea{width:100%;min-height:96px;border:1px solid #e5dcc4;border-radius:12px;padding:13px 15px;font-size:14.5px;font-family:inherit;resize:vertical;background:#fffdf8;line-height:1.55}
+.qnav{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.qnav .prog{font-size:12px;font-weight:700;color:#8b8371}
+.next{background:#241f15;color:#f4c95d;border:none;border-radius:10px;padding:11px 24px;font-weight:800;font-size:14px;cursor:pointer}
+.back{background:none;border:none;color:#b3a988;font-size:13px;cursor:pointer}
+
+/* milestone marker on the path */
+.mile{display:flex;align-items:center;gap:10px;padding:14px 0;z-index:1}
+.mile .mc{width:44px;height:44px;border-radius:50%;background:#fff;border:3px solid #d9e6f7;color:#3730a3;display:flex;align-items:center;justify-content:center;font-size:16px}
+.mile b{font-size:14px;color:#3730a3}
+.mile span{font-size:12px;color:#8b8371;display:block}
+</style></head><body>
+
+<div class="top">
+  <div class="logo"><span class="dot">A</span>AppPilot</div>
+  <div class="right"><span class="cred">14 credits</span><span class="av">SG</span></div>
+</div>
+
+<div class="hero">
+  <div><h1>DogWalkr</h1><div class="sub">Your build journey — 1 of 7 stages complete</div></div>
+</div>
+
+<div class="path">
+  <div class="node done"><div class="nc">✓</div>
+    <div class="nbody"><span class="tag">Passed</span><b>Define</b><span>what, who, what NOT</span></div></div>
+
+  <div class="stage-card">
+    <div class="eyebrow">Stage 2 — you're here</div>
+    <h2>Architect</h2>
+    <p class="plain">Decide only the things that are expensive to change later: who can see whose data, where secrets live, what it talks to.</p>
+    <div class="gate"><b>To pass:</b> every decision written down with its reason.</div>
+
+    <div class="mentor-row">
+      <div class="mav">M</div>
+      <div class="mentor-bub">Two strangers both use DogWalkr — should either ever see the other's clients?</div>
+    </div>
+    <div class="you-bub">No way — one walker seeing another's client list would be a disaster.</div>
+    <div class="mentor-row" style="margin-top:12px">
+      <div class="mav">M</div>
+      <div class="mentor-bub">Exactly — so every record needs an owner tag. ✍️ I wrote that into Question 1 for you. Next: what does your app need passwords or keys for?</div>
+    </div>
+    <div class="reply"><input placeholder="Answer the mentor…"><button>→</button></div>
+
+    <div class="qblock">
+      <div class="qask">What does your app need passwords or keys for?</div>
+      <div class="qex">Just list them — your builder stores these as 'environment variables', never in the code.</div>
+      <textarea placeholder="Keys/passwords for: ___"></textarea>
+      <div class="qnav">
+        <button class="back">← Back</button>
+        <span class="prog">Question 2 of 4 · ●○○○</span>
+        <button class="next">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="node locked"><div class="nc">3</div>
+    <div class="nbody"><span class="tag">Next up</span><b>Foundation</b><span>repo, deploy, live URL</span></div></div>
+
+  <div class="mile"><div class="mc">✓</div>
+    <div><b>App check</b><span>we'll verify your live URL here</span></div></div>
+
+  <div class="node locked"><div class="nc">4</div>
+    <div class="nbody"><b>First Slice</b><span>one real feature end to end</span></div></div>
+  <div class="node locked"><div class="nc">5</div>
+    <div class="nbody"><b>Feature Slices</b><span>the rest, one thin slice at a time</span></div></div>
+  <div class="node locked"><div class="nc">6</div>
+    <div class="nbody"><b>Harden</b><span>safe for strangers</span></div></div>
+  <div class="node locked"><div class="nc">🚀</div>
+    <div class="nbody"><b>Launch</b><span>one friendly human uses it</span></div></div>
+</div>
+</body></html>
