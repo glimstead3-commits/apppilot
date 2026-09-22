@@ -100,12 +100,14 @@ def _system_prompt(stage: dict, project: dict) -> str:
             "\nYour main job: interview them through this stage's questions — ask them\n"
             "one at a time, in your own words (never just paste the question):\n"
             + "\n".join(f"- {q['ask']}" for q in qs)
-            + "\nWhen they've covered them all in chat, tell them their answers are\n"
-            "ready to review below — they'll be drafted automatically."
+            + "\nSkip any question they've already answered in this chat — never re-ask\n"
+            "it. If an answer is thin, dig deeper on that instead. When they've covered\n"
+            "them all, tell them their answers are ready to review below — they'll be\n"
+            "drafted automatically."
         )
     return f"""You are AppPilot's mentor — a patient senior developer guiding a complete novice through building their app "{project.get('name', '')}".{check_txt}
 
-They are on Stage {stage['order']} — {stage['title']}.
+They are on Stage {stage['order'] + 1} — {stage['title']}.
 What this stage is: {stage.get('plain', '')}
 Why it matters: {stage.get('why', '')}
 Gate to pass: {stage.get('gate', '')}
@@ -116,14 +118,17 @@ Gate to pass: {stage.get('gate', '')}
 Rules:
 - Plain English only. No jargon — explain terms when you must use them.
 - Never write code. You guide; their AI coding tool does the building.
+- React to what they actually said FIRST — then move to the next unanswered
+  question. Never re-ask something they've already covered.
+- Their messages will have typos — interpret intent, don't correct spelling.
 - One idea per reply. End with ONE clear question or action for them.
-- Keep replies under 120 words.
+- Keep replies under 80 words — short and warm beats long and thorough.
 - If they seem lost, give them the exact next click/action.
 - If they ask something off-topic for this stage, answer briefly then steer back.
 """
 
 
-def _call_ai(system: str, history: list, max_tokens: int = 800) -> str:
+def _call_ai(system: str, history: list, max_tokens: int = 800, timeout: int = 30) -> str:
     provider = os.environ.get("AI_PROVIDER", "anthropic").lower()
     cfg = PROVIDERS.get(provider)
     # strip(): pasted keys often carry a trailing newline/space → bad header
@@ -132,7 +137,7 @@ def _call_ai(system: str, history: list, max_tokens: int = 800) -> str:
         return ""
     if provider == "gemini":
         url = cfg["url"].format(model=cfg["model"])
-        r = requests.post(url, timeout=30,
+        r = requests.post(url, timeout=timeout,
                           headers={"x-goog-api-key": key, "content-type": "application/json"},
                           json={
                               "system_instruction": {"parts": [{"text": system}]},
@@ -149,7 +154,7 @@ def _call_ai(system: str, history: list, max_tokens: int = 800) -> str:
         parts = r.json()["candidates"][0]["content"].get("parts") or []
         return "".join(p.get("text", "") for p in parts if not p.get("thought"))
     if provider == "anthropic":
-        r = requests.post(cfg["url"], timeout=30, headers={
+        r = requests.post(cfg["url"], timeout=timeout, headers={
             "x-api-key": key,
             "anthropic-version": "2023-06-01",
             "content-type": "application/json",
@@ -161,7 +166,7 @@ def _call_ai(system: str, history: list, max_tokens: int = 800) -> str:
         })
         r.raise_for_status()
         return r.json()["content"][0]["text"]
-    r = requests.post(cfg["url"], timeout=30, headers={
+    r = requests.post(cfg["url"], timeout=timeout, headers={
         "Authorization": f"Bearer {key}",
         "content-type": "application/json",
     }, json={
@@ -303,15 +308,17 @@ def mentor_draft(project_id: str, stage_key: str, user=Depends(get_current_user)
                 .sort("created_at", 1).limit(40))
     if not hist:
         raise HTTPException(status_code=400, detail="Chat with the mentor first")
-    convo = "\n".join(f"{h['role']}: {h['content']}" for h in hist)
+    # Last 24 messages is plenty of context — and a smaller prompt answers faster.
+    convo = "\n".join(f"{h['role']}: {h['content']}" for h in hist[-24:])
 
     keys = ", ".join(f'"{q["key"]}"' for q in questions)
     asks = "\n".join(f'- "{q["key"]}": {q["ask"]}' for q in questions)
     prompt = (
-        f"Based on this conversation about the app idea \"{p.get('name','')}\",\n"
-        f"draft concise answers for each question. Output ONLY a JSON object\n"
-        f"with exactly these keys: {keys}\n\nQuestions:\n{asks}\n\n"
-        f"Conversation:\n{convo}\n\nJSON:"
+        f"Based on this conversation about the app \"{p.get('name','')}\", draft a\n"
+        f"concise answer (1-2 sentences each, plain words) for EVERY question\n"
+        f"below. If they only hinted at an answer, fill the gap sensibly.\n"
+        f"Output ONLY a JSON object with exactly these keys: {keys}\n\n"
+        f"Questions:\n{asks}\n\nConversation:\n{convo}\n\nJSON:"
     )
     global LAST_AI_ERROR
     answers = {}
@@ -322,12 +329,14 @@ def mentor_draft(project_id: str, stage_key: str, user=Depends(get_current_user)
             reply = _call_ai(
                 "You convert mentoring chats into structured answers. Output raw JSON only — no markdown fences, no commentary.",
                 [{"role": "user", "content": prompt}],
-                max_tokens=1500,
+                max_tokens=2000, timeout=45,
             )
         except Exception as e:
+            # Retry once on API errors too — free-tier Gemini queues requests
+            # and a transient read timeout usually succeeds on the second go.
             LAST_AI_ERROR = f"{os.environ.get('AI_PROVIDER','anthropic')} draft: {e}"
             print(f"[mentor] draft AI call failed: {LAST_AI_ERROR}")
-            break
+            continue
         answers = _extract_answers(reply, {q["key"] for q in questions})
         if answers:
             LAST_AI_ERROR = ""
