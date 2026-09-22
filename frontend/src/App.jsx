@@ -749,7 +749,7 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked }) {
   const answeredCount = (stage.questions || []).filter((q) => String(answers[q.key] || "").trim()).length;
   const blanks = (stage.questions || []).some((q) => !String(answers[q.key] || "").trim());
   const canDraft = chatCount > 0 && aiOn && blanks;
-  const ctaLabel = !blanks ? "Review my answers →" : canDraft ? "Fill in my answers →" : "Answer the questions →";
+  const ctaLabel = !blanks ? "Review my answers →" : canDraft ? "See my answers →" : "Answer the questions →";
   const writing = mode === "write" && steps.length > 0;
 
   return (
@@ -776,11 +776,16 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked }) {
           </div>
         </>
       ) : writing ? (
-        /* ---- Question page: one step at a time, nothing else on screen ---- */
+        /* ---- Review page: what's been written down, one step at a time ---- */
         <>
           <button className="back" onClick={() => { setMode("talk"); setErr(""); }}>
-            ← Back to the mentor
+            ← Back to the chat
           </button>
+          <p className="qhint" style={{ marginTop: 14 }}>
+            {answeredCount > 0
+              ? "Here's what's written down so far — change anything that's not right, then save."
+              : "Answer each in plain words — rough is fine."}
+          </p>
           <div className="qblock">
             <div className="qmeta">
               <span className="qn">
@@ -869,7 +874,13 @@ function StageCard({ stage, project, onSaved, onSpent, planLocked }) {
                 onClick={async () => { setErr(""); if (canDraft) await runDraft(); else setMode("write"); }}>
                 {drafting ? "Mentor is writing your answers…" : ctaLabel}
               </button>
-              {err && <p className="qerr">{err}</p>}
+              {err && (
+                <p className="qerr">{err}{" "}
+                  <button className="draft" onClick={() => { setErr(""); setMode("write"); }}>
+                    or answer them yourself →
+                  </button>
+                </p>
+              )}
             </>
           )}
         </>
@@ -951,7 +962,7 @@ function MentorChat({ projectId, stageKey, firstAsk, hasQuestions, onSpent, onCo
       )}
 
       <div className="reply">
-        <input placeholder="Tell the mentor about your idea… (1 credit)"
+        <input placeholder="Type your answer… (1 credit)"
           value={text} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()} />
         <button onClick={send} disabled={busy || !text.trim()}>→</button>
